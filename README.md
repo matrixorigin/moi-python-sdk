@@ -42,6 +42,7 @@ role_id, created = sdk.create_table_role(
 ## Features
 
 - Full coverage of Catalog/Database/Table/Volume/File/Folder APIs
+- Detailed per-method references in `docs/api_reference.md` (EN) and `docs/api_reference_zh.md` (中文)
 - Connector workflows: local uploads, connector imports, preview
 - User/Role/Privilege management
 - GenAI, NL2SQL, Health, and Log endpoints
