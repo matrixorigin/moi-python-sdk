@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .client import RawClient
 from .errors import ErrNilRequest
+from .options import CallOption
 
 
 @dataclass
@@ -112,6 +113,16 @@ class SDKClient:
             meta=meta,
             table_config=config,
         )
+
+    def run_sql(self, statement: str, *opts: CallOption) -> Any:
+        """Run a SQL statement via the NL2SQL RunSQL operation."""
+        if not statement or not statement.strip():
+            raise ValueError("statement is required")
+        payload = {
+            "operation": "run_sql",
+            "statement": statement,
+        }
+        return self.raw.run_nl2sql(payload, *opts)
 
     # ------------------------------------------------------------------
     # Helpers

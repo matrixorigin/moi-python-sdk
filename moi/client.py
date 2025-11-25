@@ -738,6 +738,26 @@ class RawClient:
             *opts,
         )
 
+    def download_connector_file(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        if request is None:
+            raise ErrNilRequest("download_connector_file requires a request payload")
+        conn_file_id = str(request.get("conn_file_id", "")).strip()
+        if not conn_file_id:
+            raise ValueError("conn_file_id is required")
+        payload = dict(request) if isinstance(request, dict) else {}
+        payload["conn_file_id"] = conn_file_id
+        return self._request_json("POST", "/connectors/file/download", payload, *opts)
+
+    def delete_connector_file(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        if request is None:
+            raise ErrNilRequest("delete_connector_file requires a request payload")
+        conn_file_id = str(request.get("conn_file_id", "")).strip()
+        if not conn_file_id:
+            raise ValueError("conn_file_id is required")
+        payload = dict(request) if isinstance(request, dict) else {}
+        payload["conn_file_id"] = conn_file_id
+        return self._request_json("POST", "/connectors/file/delete", payload, *opts)
+
     # ----------------------------------------------------------------------
     # User APIs
     # ----------------------------------------------------------------------
@@ -924,7 +944,7 @@ class RawClient:
     def run_nl2sql(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         if request is None:
             raise ErrNilRequest("run_nl2sql requires a request payload")
-        return self._request_json("POST", "/nl2sql/run_sql", request, *opts)
+        return self._request_json("POST", "/catalog/nl2sql/run_sql", request, *opts)
 
     def create_knowledge(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         if request is None:

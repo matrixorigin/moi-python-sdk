@@ -105,6 +105,8 @@ sdk = SDKClient(raw)
 | `upload_local_file_from_path` | 通过路径打开并上传。 | `raw.upload_local_file_from_path("data.csv", [{"filename": "data.csv", "path": "/"}])` |
 | `preview_connector_file` | 预览连接器/本地上传文件的结构。 | `raw.preview_connector_file({"conn_file_id": conn_file_id})` |
 | `upload_connector_file` | 上传（或引用 `table_config.conn_file_ids`）来触发表导入。 | `raw.upload_connector_file("123456", meta=[{"filename": "data.csv", "path": "/"}], table_config={"new_table": True, "database_id": 201, "conn_file_ids": [conn_file_id]})` |
+| `download_connector_file` | 生成 connector 文件的下载链接。 | `raw.download_connector_file({"conn_file_id": conn_file_id})` |
+| `delete_connector_file` | 通过 `conn_file_id` 删除 connector 文件。 | `raw.delete_connector_file({"conn_file_id": conn_file_id})` |
 
 ## 用户（User）接口
 
@@ -178,6 +180,7 @@ sdk = SDKClient(raw)
 | `create_table_role` | 新建或复用仅包含表权限的角色，返回 `(role_id, created)`。 | `sdk.create_table_role("analytics_reader", "表级读权限", [TablePrivInfo(table_id=301, priv_codes=["DT8"])])` |
 | `update_table_role` | 更新表权限/全局权限，可自动保留未指定字段。 | `sdk.update_table_role(role_id, "", [TablePrivInfo(table_id=301, priv_codes=["DT8","DT9"])], global_privs=None)` |
 | `import_local_file_to_table` | 将已上传的本地文件导入目标表，自动拼好 MOI 所需参数（VolumeID、Meta 等）。 | `sdk.import_local_file_to_table({"new_table": False, "table_id": 301, "database_id": 201, "conn_file_ids": [conn_file_id], "existed_table": []})` |
+| `run_sql` | 通过 NL2SQL RunSQL 执行 SQL 语句。 | `sdk.run_sql("select * from sales.orders limit 10")` |
 
 这些高级方法复用了 Go SDK 中的业务逻辑，确保 Python 开发者可以以同样的方式完成角色管理与文件导入等场景。
 

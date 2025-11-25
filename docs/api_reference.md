@@ -98,6 +98,8 @@ sdk = SDKClient(raw)
 | `upload_local_file_from_path` | Open + upload by path. | `raw.upload_local_file_from_path("data.csv", [{"filename": "data.csv", "path": "/"}])` |
 | `preview_connector_file` | Inspect uploaded/connector file. | `raw.preview_connector_file({"conn_file_id": conn_file_id})` |
 | `upload_connector_file` | Upload or reference files for ingestion. | `raw.upload_connector_file("123456", meta=[{"filename": "data.csv", "path": "/"}], table_config={"new_table": True, "database_id": 201, "conn_file_ids": [conn_file_id]})` |
+| `download_connector_file` | Generate a signed download URL for connector files. | `raw.download_connector_file({"conn_file_id": conn_file_id})` |
+| `delete_connector_file` | Delete connector file by `conn_file_id`. | `raw.delete_connector_file({"conn_file_id": conn_file_id})` |
 
 ## User APIs
 
@@ -173,6 +175,7 @@ sdk = SDKClient(raw)
 | `create_table_role` | Create/fetch table privilege role. Returns `(role_id, created_bool)`. | `sdk.create_table_role("analytics_reader", "Table read", [TablePrivInfo(table_id=301, priv_codes=["DT8"])])` |
 | `update_table_role` | Update table/global privileges while preserving unspecified fields. | `sdk.update_table_role(role_id, "", [TablePrivInfo(table_id=301, priv_codes=["DT8","DT9"])], global_privs=None)` |
 | `import_local_file_to_table` | Import already uploaded file(s) into table using connector workflow. | `sdk.import_local_file_to_table({"new_table": False, "table_id": 301, "database_id": 201, "conn_file_ids": [conn_file_id], "existed_table": []})` |
+| `run_sql` | Execute fully qualified SQL via NL2SQL RunSQL operation. | `sdk.run_sql("select * from sales.orders limit 10")` |
 
 These high-level helpers encapsulate the multi-step logic showcased in the Go
 SDK documentation, ensuring Python developers enjoy the same ergonomic flows.
