@@ -171,6 +171,34 @@ sdk = SDKClient(raw)
 | `list_user_logs` | 查询用户操作日志。 | `raw.list_user_logs({"common_condition": {"page": 1, "page_size": 20}})` |
 | `list_role_logs` | 查询角色操作日志。 | `raw.list_role_logs({"common_condition": {"page": 1, "page_size": 20}})` |
 
+## LLM Proxy API
+
+LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（无 envelope 包装）。
+
+### 会话管理
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `create_llm_session` | 创建新会话。 | `raw.create_llm_session({"title": "我的会话", "source": "my-app", "user_id": "user123", "tags": ["alpha"]})` |
+| `list_llm_sessions` | 列出会话（支持过滤和分页）。 | `raw.list_llm_sessions({"user_id": "user123", "source": "my-app", "page": 1, "page_size": 20})` |
+| `get_llm_session` | 根据 ID 获取会话。 | `raw.get_llm_session(1)` |
+| `update_llm_session` | 更新会话（支持部分更新）。 | `raw.update_llm_session(1, {"title": "更新标题", "tags": ["release"]})` |
+| `delete_llm_session` | 删除会话。 | `raw.delete_llm_session(1)` |
+| `list_llm_session_messages` | 列出会话中的消息。 | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
+| `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID。 | `raw.get_llm_session_latest_completed_message(1)` |
+
+### 聊天消息管理
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `create_llm_chat_message` | 创建聊天消息记录。 | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "你好", "model": "gpt-4", "status": "success"})` |
+| `list_llm_chat_messages` | 列出聊天消息（支持过滤和分页）。 | `raw.list_llm_chat_messages({"user_id": "user123", "session_id": 1, "page": 1, "page_size": 20})` |
+| `get_llm_chat_message` | 根据 ID 获取消息。 | `raw.get_llm_chat_message(1)` |
+| `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容"})` |
+| `delete_llm_chat_message` | 删除消息。 | `raw.delete_llm_chat_message(1)` |
+| `update_llm_chat_message_tags` | 替换消息标签（完全替换）。 | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
+| `delete_llm_chat_message_tag` | 删除消息中的单个标签。 | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |
+
 ---
 
 # SDKClient 高级封装

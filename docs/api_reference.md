@@ -166,6 +166,34 @@ sdk = SDKClient(raw)
 | `list_user_logs` | Paginated user logs. | `raw.list_user_logs({"common_condition": {"page": 1, "page_size": 20}})` |
 | `list_role_logs` | Paginated role logs. | `raw.list_role_logs({"common_condition": {"page": 1, "page_size": 20}})` |
 
+## LLM Proxy APIs
+
+LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wrapper).
+
+### Session Management
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `create_llm_session` | Create new session. | `raw.create_llm_session({"title": "My Session", "source": "my-app", "user_id": "user123", "tags": ["alpha"]})` |
+| `list_llm_sessions` | List sessions with filters/pagination. | `raw.list_llm_sessions({"user_id": "user123", "source": "my-app", "page": 1, "page_size": 20})` |
+| `get_llm_session` | Get session by ID. | `raw.get_llm_session(1)` |
+| `update_llm_session` | Update session (partial updates). | `raw.update_llm_session(1, {"title": "Updated", "tags": ["release"]})` |
+| `delete_llm_session` | Delete session. | `raw.delete_llm_session(1)` |
+| `list_llm_session_messages` | List messages for session. | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
+| `get_llm_session_latest_completed_message` | Get latest completed message ID. | `raw.get_llm_session_latest_completed_message(1)` |
+
+### Chat Message Management
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `create_llm_chat_message` | Create chat message record. | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "Hello", "model": "gpt-4", "status": "success"})` |
+| `list_llm_chat_messages` | List messages with filters/pagination. | `raw.list_llm_chat_messages({"user_id": "user123", "session_id": 1, "page": 1, "page_size": 20})` |
+| `get_llm_chat_message` | Get message by ID. | `raw.get_llm_chat_message(1)` |
+| `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply"})` |
+| `delete_llm_chat_message` | Delete message. | `raw.delete_llm_chat_message(1)` |
+| `update_llm_chat_message_tags` | Replace message tags. | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
+| `delete_llm_chat_message_tag` | Delete single tag from message. | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |
+
 ---
 
 # SDKClient Helpers

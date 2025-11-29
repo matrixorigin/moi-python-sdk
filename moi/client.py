@@ -1003,3 +1003,327 @@ class RawClient:
             raise ErrNilRequest("list_role_logs requires a request payload")
         return self._request_json("POST", "/log/role", request, *opts)
 
+    # ----------------------------------------------------------------------
+    # LLM Proxy APIs
+    # ----------------------------------------------------------------------
+
+    def _do_llm_json(
+        self,
+        method: str,
+        path: str,
+        body: Optional[Any],
+        *opts: CallOption
+    ) -> Any:
+        """
+        Issue a JSON request to LLM Proxy API and decode the direct response (no envelope).
+        
+        LLM Proxy APIs return data directly or error in ErrorResponse format, not in envelope format.
+        """
+        if self is None:
+            raise ValueError("sdk client is None")
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build full URL with /llm-proxy prefix
+        full_path = "/llm-proxy" + (path if path.startswith("/") else "/" + path)
+        url = self._build_url(full_path, call_opts.query_params)
+        
+        # Serialize body
+        json_body = None
+        if body is not None:
+            json_body = json.dumps(body, default=str)
+        
+        # Build headers
+        headers = self._build_headers(call_opts, "application/json")
+        
+        # Make request
+        response = self._http_client.request(
+            method=method,
+            url=url,
+            headers=headers,
+            data=json_body
+        )
+        
+        # Read response body
+        data = response.content
+        
+        # Check for error response format
+        if response.status_code >= 400:
+            try:
+                err_data = response.json()
+                if isinstance(err_data, dict) and "error" in err_data:
+                    error_info = err_data["error"]
+                    raise APIError(
+                        code=error_info.get("code", ""),
+                        message=error_info.get("message", ""),
+                        http_status=response.status_code
+                    )
+            except (json.JSONDecodeError, KeyError):
+                pass
+            # If not in error format, return HTTP error
+            raise HTTPError(response.status_code, data)
+        
+        # Parse successful response
+        if len(data) > 0 and data != b"null":
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                return data.decode('utf-8') if isinstance(data, bytes) else data
+        return None
+
+    def create_llm_session(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Create a new session in LLM Proxy.
+        
+        Example:
+            resp = client.create_llm_session({
+                "title": "My Session",
+                "source": "my-app",
+                "user_id": "user123",
+                "tags": ["alpha", "beta"]
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("create_llm_session requires a request payload")
+        return self._do_llm_json("POST", "/api/sessions", request, *opts)
+
+    def list_llm_sessions(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        List sessions with optional filtering and pagination.
+        
+        Example:
+            resp = client.list_llm_sessions({
+                "user_id": "user123",
+                "source": "my-app",
+                "page": 1,
+                "page_size": 20
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("list_llm_sessions requires a request payload")
+        
+        # Build query parameters
+        query_params = {}
+        if request.get("user_id"):
+            query_params["user_id"] = request["user_id"]
+        if request.get("source"):
+            query_params["source"] = request["source"]
+        if request.get("keyword"):
+            query_params["keyword"] = request["keyword"]
+        if request.get("tags"):
+            tags = request["tags"]
+            if isinstance(tags, list):
+                query_params["tags"] = ",".join(tags)
+            else:
+                query_params["tags"] = tags
+        if request.get("page"):
+            query_params["page"] = str(request["page"])
+        if request.get("page_size"):
+            query_params["page_size"] = str(request["page_size"])
+        
+        # Add query params to call options
+        from .options import with_query
+        opts_list = list(opts)
+        if query_params:
+            opts_list.append(with_query(query_params))
+        
+        return self._do_llm_json("GET", "/api/sessions", None, *opts_list)
+
+    def get_llm_session(self, session_id: int, *opts: CallOption) -> Any:
+        """
+        Retrieve a single session by ID.
+        
+        Example:
+            session = client.get_llm_session(1)
+        """
+        return self._do_llm_json("GET", f"/api/sessions/{session_id}", None, *opts)
+
+    def update_llm_session(self, session_id: int, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Update a session (supports partial updates).
+        
+        Example:
+            updated = client.update_llm_session(1, {
+                "title": "Updated Title",
+                "tags": ["release"]
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("update_llm_session requires a request payload")
+        return self._do_llm_json("PUT", f"/api/sessions/{session_id}", request, *opts)
+
+    def delete_llm_session(self, session_id: int, *opts: CallOption) -> Any:
+        """
+        Delete a session.
+        
+        Example:
+            client.delete_llm_session(1)
+        """
+        return self._do_llm_json("DELETE", f"/api/sessions/{session_id}", None, *opts)
+
+    def list_llm_session_messages(self, session_id: int, request: Optional[Dict[str, Any]] = None, *opts: CallOption) -> Any:
+        """
+        List messages for a specific session with optional filtering.
+        
+        Example:
+            messages = client.list_llm_session_messages(1, {
+                "role": "user",
+                "status": "success"
+            })
+        """
+        if request is None:
+            request = {}
+        
+        # Build query parameters
+        query_params = {}
+        if request.get("source"):
+            query_params["source"] = request["source"]
+        if request.get("role"):
+            query_params["role"] = request["role"]
+        if request.get("status"):
+            query_params["status"] = request["status"]
+        if request.get("model"):
+            query_params["model"] = request["model"]
+        
+        # Add query params to call options
+        from .options import with_query
+        opts_list = list(opts)
+        if query_params:
+            opts_list.append(with_query(query_params))
+        
+        return self._do_llm_json("GET", f"/api/sessions/{session_id}/messages", None, *opts_list)
+
+    def get_llm_session_latest_completed_message(self, session_id: int, *opts: CallOption) -> Any:
+        """
+        Retrieve the latest completed message ID for a session.
+        
+        Example:
+            resp = client.get_llm_session_latest_completed_message(1)
+        """
+        return self._do_llm_json("GET", f"/api/sessions/{session_id}/messages/latest-completed", None, *opts)
+
+    def create_llm_chat_message(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Create a new chat message record.
+        
+        Example:
+            msg = client.create_llm_chat_message({
+                "user_id": "user123",
+                "source": "my-app",
+                "role": "user",
+                "content": "Hello, world!",
+                "model": "gpt-4",
+                "status": "success",
+                "tags": ["tag1", "tag2"]
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("create_llm_chat_message requires a request payload")
+        return self._do_llm_json("POST", "/api/chat-messages", request, *opts)
+
+    def list_llm_chat_messages(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        List chat messages with optional filtering and pagination.
+        
+        Example:
+            resp = client.list_llm_chat_messages({
+                "user_id": "user123",
+                "session_id": 1,
+                "page": 1,
+                "page_size": 20
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("list_llm_chat_messages requires a request payload")
+        
+        # Build query parameters
+        query_params = {}
+        if request.get("user_id"):
+            query_params["user_id"] = request["user_id"]
+        if request.get("session_id") is not None:
+            query_params["session_id"] = str(request["session_id"])
+        if request.get("source"):
+            query_params["source"] = request["source"]
+        if request.get("role"):
+            query_params["role"] = request["role"]
+        if request.get("status"):
+            query_params["status"] = request["status"]
+        if request.get("tags"):
+            tags = request["tags"]
+            if isinstance(tags, list):
+                query_params["tags"] = ",".join(tags)
+            else:
+                query_params["tags"] = tags
+        if request.get("page"):
+            query_params["page"] = str(request["page"])
+        if request.get("page_size"):
+            query_params["page_size"] = str(request["page_size"])
+        
+        # Add query params to call options
+        from .options import with_query
+        opts_list = list(opts)
+        if query_params:
+            opts_list.append(with_query(query_params))
+        
+        return self._do_llm_json("GET", "/api/chat-messages", None, *opts_list)
+
+    def get_llm_chat_message(self, message_id: int, *opts: CallOption) -> Any:
+        """
+        Retrieve a single chat message by ID.
+        
+        Example:
+            msg = client.get_llm_chat_message(1)
+        """
+        return self._do_llm_json("GET", f"/api/chat-messages/{message_id}", None, *opts)
+
+    def update_llm_chat_message(self, message_id: int, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Update a chat message.
+        
+        Example:
+            updated = client.update_llm_chat_message(1, {
+                "status": "success",
+                "response": "Updated response"
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("update_llm_chat_message requires a request payload")
+        return self._do_llm_json("PUT", f"/api/chat-messages/{message_id}", request, *opts)
+
+    def delete_llm_chat_message(self, message_id: int, *opts: CallOption) -> Any:
+        """
+        Delete a chat message.
+        
+        Example:
+            client.delete_llm_chat_message(1)
+        """
+        return self._do_llm_json("DELETE", f"/api/chat-messages/{message_id}", None, *opts)
+
+    def update_llm_chat_message_tags(self, message_id: int, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Update message tags (complete replacement).
+        
+        Example:
+            updated = client.update_llm_chat_message_tags(1, {
+                "tags": ["tag1", "tag2", "tag3"]
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("update_llm_chat_message_tags requires a request payload")
+        return self._do_llm_json("PUT", f"/api/chat-messages/{message_id}/tags", request, *opts)
+
+    def delete_llm_chat_message_tag(self, message_id: int, source: str, name: str, *opts: CallOption) -> Any:
+        """
+        Delete a single tag from a message.
+        
+        Example:
+            client.delete_llm_chat_message_tag(1, "my-app", "tag1")
+        """
+        from urllib.parse import quote
+        path = f"/api/chat-messages/{message_id}/tags/{quote(source)}/{quote(name)}"
+        return self._do_llm_json("DELETE", path, None, *opts)
+
