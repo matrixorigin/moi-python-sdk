@@ -1201,10 +1201,25 @@ class RawClient:
         """
         Retrieve the latest completed message ID for a session.
         
+        This method only returns messages with status "success".
+        
         Example:
             resp = client.get_llm_session_latest_completed_message(1)
         """
         return self._do_llm_json("GET", f"/api/sessions/{session_id}/messages/latest-completed", None, *opts)
+
+    def get_llm_session_latest_message(self, session_id: int, *opts: CallOption) -> Any:
+        """
+        Retrieve the latest message ID for a session (regardless of status).
+        
+        This method differs from get_llm_session_latest_completed_message:
+        - get_llm_session_latest_completed_message: only returns messages with status "success"
+        - get_llm_session_latest_message: returns the latest message regardless of status (success, failed, retry, aborted, etc.)
+        
+        Example:
+            resp = client.get_llm_session_latest_message(1)
+        """
+        return self._do_llm_json("GET", f"/api/sessions/{session_id}/messages/latest", None, *opts)
 
     def create_llm_chat_message(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         """

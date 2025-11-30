@@ -180,7 +180,8 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | `update_llm_session` | Update session (partial updates). | `raw.update_llm_session(1, {"title": "Updated", "tags": ["release"]})` |
 | `delete_llm_session` | Delete session. | `raw.delete_llm_session(1)` |
 | `list_llm_session_messages` | List messages for session. | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
-| `get_llm_session_latest_completed_message` | Get latest completed message ID. | `raw.get_llm_session_latest_completed_message(1)` |
+| `get_llm_session_latest_completed_message` | Get latest completed message ID (only success status). | `raw.get_llm_session_latest_completed_message(1)` |
+| `get_llm_session_latest_message` | Get latest message ID (regardless of status). | `raw.get_llm_session_latest_message(1)` |
 
 ### Chat Message Management
 

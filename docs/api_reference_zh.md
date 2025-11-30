@@ -185,7 +185,8 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `update_llm_session` | 更新会话（支持部分更新）。 | `raw.update_llm_session(1, {"title": "更新标题", "tags": ["release"]})` |
 | `delete_llm_session` | 删除会话。 | `raw.delete_llm_session(1)` |
 | `list_llm_session_messages` | 列出会话中的消息。 | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
-| `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID。 | `raw.get_llm_session_latest_completed_message(1)` |
+| `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID（仅成功状态）。 | `raw.get_llm_session_latest_completed_message(1)` |
+| `get_llm_session_latest_message` | 获取会话中最新消息 ID（无论状态）。 | `raw.get_llm_session_latest_message(1)` |
 
 ### 聊天消息管理
 
