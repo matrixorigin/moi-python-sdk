@@ -689,8 +689,9 @@ class RawClient:
     def upload_connector_file(
         self,
         volume_id: str,
+        /,
+        *opts: CallOption,
         file_items: Optional[Iterable[Tuple[IO[bytes], str]]] = None,
-        *,
         meta: Optional[Iterable[Dict[str, Any]]] = None,
         file_types: Optional[Iterable[int]] = None,
         path_regex: Optional[str] = None,
@@ -698,7 +699,6 @@ class RawClient:
         dedup_config: Optional[Dict[str, Any]] = None,
         table_config: Optional[Dict[str, Any]] = None,
         extra_fields: Optional[Dict[str, Any]] = None,
-        *opts: CallOption,
     ) -> Any:
         """
         Upload files (or reference existing connector files) to trigger table import.
