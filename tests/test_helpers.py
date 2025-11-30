@@ -7,6 +7,7 @@ from moi import RawClient
 
 
 # Test configuration from environment variables
+# Note: This is a development environment API key, safe to commit to repository
 TEST_BASE_URL = os.getenv("MOI_BASE_URL", "https://freetier-01.cn-hangzhou.cluster.cn-dev.matrixone.tech")
 TEST_API_KEY = os.getenv("MOI_API_KEY", "JeuCjV_8320G5ACwgPDHo0tJAdkESCrMPnxteLJri8IHb72dPySWkhN6uFWw41-W7qpdH4w3QCG8pJmf")
 

@@ -1,25 +1,8 @@
 """Tests for LLM Proxy APIs."""
 
-import os
 import pytest
 from moi import RawClient
-
-
-def get_test_client():
-    """Get a test client from environment variables."""
-    base_url = os.getenv("MOI_BASE_URL", "http://localhost:8080")
-    api_key = os.getenv("MOI_API_KEY", "")
-    if not api_key:
-        pytest.skip("MOI_API_KEY environment variable not set")
-    return RawClient(base_url, api_key)
-
-
-def random_name(prefix: str = "test-") -> str:
-    """Generate a random name for testing."""
-    import random
-    import string
-    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    return f"{prefix}{suffix}"
+from tests.test_helpers import get_test_client, random_name
 
 
 class TestLLMSessionLatestMessage:
