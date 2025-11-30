@@ -12,7 +12,7 @@ class TestUserLiveFlow:
         """Test complete user flow."""
         client = get_test_client()
         
-        role_id, mark_role_deleted = create_test_role(client, ["QueryCatalog"])
+        role_id, mark_role_deleted = create_test_role(client, ["DC2"])  # QueryCatalog
         
         try:
             # Create user

@@ -12,7 +12,7 @@ class TestRoleLiveFlow:
         """Test complete role flow."""
         client = get_test_client()
         
-        priv_codes = ["QueryCatalog"]
+        priv_codes = ["DC2"]  # QueryCatalog
         role_id, mark_role_deleted = create_test_role(client, priv_codes)
         
         try:
@@ -27,15 +27,15 @@ class TestRoleLiveFlow:
                 "obj_type": "catalog",
                 "authority_code_list": [
                     {
-                        "code": "UpdateCatalog",
+                        "code": "DC3",  # UpdateCatalog
                         "rule_list": None,
                     }
                 ],
             }
             client.update_role_info({
                 "id": role_id,
-                "priv_list": ["QueryCatalog"],
-                "obj_priv_list": [obj_priv],
+                "authority_code_list": ["DC2"],  # QueryCatalog
+                "obj_authority_code_list": [obj_priv],
                 "description": "sdk update",
             })
             

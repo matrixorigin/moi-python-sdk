@@ -114,7 +114,7 @@ class TestCatalogNameExists:
         }
         create_resp = client.create_catalog(create_req)
         assert create_resp is not None
-        catalog_id = create_resp["catalog_id"]
+        catalog_id = create_resp["id"]
         
         try:
             # Try to create another catalog with the same name

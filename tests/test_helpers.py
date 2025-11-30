@@ -89,7 +89,7 @@ def create_test_table(client: RawClient, database_id: int):
         "database_id": database_id,
         "name": table_name,
         "columns": columns,
-        "description": "sdk test table",
+        "comment": "sdk test table",
     })
     table_id = resp["id"]
     
@@ -103,12 +103,16 @@ def create_test_table(client: RawClient, database_id: int):
 
 
 def create_test_role(client: RawClient, priv_codes: list):
-    """Create a test role and return its ID and cleanup function."""
+    """Create a test role and return its ID and cleanup function.
+    
+    Args:
+        priv_codes: List of privilege codes (e.g., ['DC2'] for QueryCatalog)
+    """
     role_name = f"sdk_role_{int(time.time() * 1_000_000_000)}"
     resp = client.create_role({
         "name": role_name,
-        "priv_list": priv_codes,
-        "obj_priv_list": [],
+        "authority_code_list": priv_codes,
+        "obj_authority_code_list": [],
     })
     role_id = resp["id"]
     

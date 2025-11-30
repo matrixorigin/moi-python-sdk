@@ -28,10 +28,10 @@ class TestTableLiveFlow:
                 {"name": "name", "type": "varchar(255)"},
             ]
             create_resp = client.create_table({
-                "id": database_id,
+                "database_id": database_id,
                 "name": table_name,
                 "columns": columns,
-                "description": "sdk test table",
+                "comment": "sdk test table",
             })
             assert create_resp is not None
             table_id = create_resp["id"]
@@ -45,7 +45,7 @@ class TestTableLiveFlow:
                 
                 # Check table exists
                 exists = client.check_table_exists({
-                    "id": database_id,
+                    "database_id": database_id,
                     "name": table_name,
                 })
                 assert exists is True
@@ -77,7 +77,7 @@ class TestTableLiveFlow:
                 
                 # Verify table doesn't exist
                 exists = client.check_table_exists({
-                    "id": database_id,
+                    "database_id": database_id,
                     "name": table_name,
                 })
                 assert exists is False
@@ -138,7 +138,7 @@ class TestTableDatabaseIDNotExists:
         
         with pytest.raises(Exception):
             client.create_table({
-                "id": non_existent_database_id,
+                "database_id": non_existent_database_id,
                 "name": random_name("test-table-"),
                 "columns": [{"name": "id", "type": "int", "is_pk": True}],
                 "comment": "test",
@@ -162,10 +162,10 @@ class TestTableNameExists:
                 {"name": "name", "type": "varchar(255)"},
             ]
             create_req = {
-                "id": database_id,
+                "database_id": database_id,
                 "name": table_name,
                 "columns": columns,
-                "description": "test table",
+                "comment": "test table",
             }
             create_resp = client.create_table(create_req)
             assert create_resp is not None
@@ -224,10 +224,10 @@ class TestTableWithDefaultValues:
             ]
             
             create_resp = client.create_table({
-                "id": database_id,
+                "database_id": database_id,
                 "name": table_name,
                 "columns": columns,
-                "description": "test table with defaults",
+                "comment": "test table with defaults",
             })
             assert create_resp is not None
             table_id = create_resp["id"]
