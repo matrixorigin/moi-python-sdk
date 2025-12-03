@@ -1169,11 +1169,28 @@ class RawClient:
         """
         List messages for a specific session with optional filtering.
         
+        The messages list endpoint does not return original_content and content fields
+        to reduce data transfer. Use get_llm_chat_message to get full message content.
+        
+        Args:
+            session_id: The session ID
+            request: Optional dict with filtering parameters:
+                - source: Filter by source
+                - role: Filter by role (e.g., "user", "assistant")
+                - status: Filter by status (e.g., "success", "failed")
+                - model: Filter by model
+                - after: Get messages after this message ID (exclusive, > relation)
+                - limit: Limit number of messages to return (default 20, max 100)
+        
         Example:
             messages = client.list_llm_session_messages(1, {
                 "role": "user",
-                "status": "success"
+                "status": "success",
+                "after": 5,   # Get messages after message ID 5
+                "limit": 50   # Limit to 50 messages
             })
+            for msg in messages:
+                print(f"Message ID: {msg['id']}")
         """
         if request is None:
             request = {}
@@ -1188,6 +1205,10 @@ class RawClient:
             query_params["status"] = request["status"]
         if request.get("model"):
             query_params["model"] = request["model"]
+        if request.get("after") is not None:
+            query_params["after"] = str(request["after"])
+        if request.get("limit") is not None:
+            query_params["limit"] = str(request["limit"])
         
         # Add query params to call options
         from .options import with_query
@@ -1240,51 +1261,6 @@ class RawClient:
             raise ErrNilRequest("create_llm_chat_message requires a request payload")
         return self._do_llm_json("POST", "/api/chat-messages", request, *opts)
 
-    def list_llm_chat_messages(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
-        """
-        List chat messages with optional filtering and pagination.
-        
-        Example:
-            resp = client.list_llm_chat_messages({
-                "user_id": "user123",
-                "session_id": 1,
-                "page": 1,
-                "page_size": 20
-            })
-        """
-        if request is None:
-            raise ErrNilRequest("list_llm_chat_messages requires a request payload")
-        
-        # Build query parameters
-        query_params = {}
-        if request.get("user_id"):
-            query_params["user_id"] = request["user_id"]
-        if request.get("session_id") is not None:
-            query_params["session_id"] = str(request["session_id"])
-        if request.get("source"):
-            query_params["source"] = request["source"]
-        if request.get("role"):
-            query_params["role"] = request["role"]
-        if request.get("status"):
-            query_params["status"] = request["status"]
-        if request.get("tags"):
-            tags = request["tags"]
-            if isinstance(tags, list):
-                query_params["tags"] = ",".join(tags)
-            else:
-                query_params["tags"] = tags
-        if request.get("page"):
-            query_params["page"] = str(request["page"])
-        if request.get("page_size"):
-            query_params["page_size"] = str(request["page_size"])
-        
-        # Add query params to call options
-        from .options import with_query
-        opts_list = list(opts)
-        if query_params:
-            opts_list.append(with_query(query_params))
-        
-        return self._do_llm_json("GET", "/api/chat-messages", None, *opts_list)
 
     def get_llm_chat_message(self, message_id: int, *opts: CallOption) -> Any:
         """

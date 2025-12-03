@@ -184,7 +184,7 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `get_llm_session` | 根据 ID 获取会话。 | `raw.get_llm_session(1)` |
 | `update_llm_session` | 更新会话（支持部分更新）。 | `raw.update_llm_session(1, {"title": "更新标题", "tags": ["release"]})` |
 | `delete_llm_session` | 删除会话。 | `raw.delete_llm_session(1)` |
-| `list_llm_session_messages` | 列出会话中的消息。 | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
+| `list_llm_session_messages` | 列出会话中的消息。注意：不返回 content 字段，使用 `get_llm_chat_message` 获取完整内容。 | `raw.list_llm_session_messages(1, {"role": "user", "status": "success", "after": 5, "limit": 50})` |
 | `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID（仅成功状态）。 | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | 获取会话中最新消息 ID（无论状态）。 | `raw.get_llm_session_latest_message(1)` |
 
@@ -193,7 +193,6 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | 方法 | 描述 | 示例 |
 | --- | --- | --- |
 | `create_llm_chat_message` | 创建聊天消息记录。 | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "你好", "model": "gpt-4", "status": "success"})` |
-| `list_llm_chat_messages` | 列出聊天消息（支持过滤和分页）。 | `raw.list_llm_chat_messages({"user_id": "user123", "session_id": 1, "page": 1, "page_size": 20})` |
 | `get_llm_chat_message` | 根据 ID 获取消息。 | `raw.get_llm_chat_message(1)` |
 | `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容"})` |
 | `delete_llm_chat_message` | 删除消息。 | `raw.delete_llm_chat_message(1)` |

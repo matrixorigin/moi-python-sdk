@@ -179,7 +179,7 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | `get_llm_session` | Get session by ID. | `raw.get_llm_session(1)` |
 | `update_llm_session` | Update session (partial updates). | `raw.update_llm_session(1, {"title": "Updated", "tags": ["release"]})` |
 | `delete_llm_session` | Delete session. | `raw.delete_llm_session(1)` |
-| `list_llm_session_messages` | List messages for session. | `raw.list_llm_session_messages(1, {"role": "user", "status": "success"})` |
+| `list_llm_session_messages` | List messages for session. Note: Does not return content fields. Use `get_llm_chat_message` for full content. | `raw.list_llm_session_messages(1, {"role": "user", "status": "success", "after": 5, "limit": 50})` |
 | `get_llm_session_latest_completed_message` | Get latest completed message ID (only success status). | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | Get latest message ID (regardless of status). | `raw.get_llm_session_latest_message(1)` |
 
@@ -188,7 +188,6 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | Method | Description | Example |
 | --- | --- | --- |
 | `create_llm_chat_message` | Create chat message record. | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "Hello", "model": "gpt-4", "status": "success"})` |
-| `list_llm_chat_messages` | List messages with filters/pagination. | `raw.list_llm_chat_messages({"user_id": "user123", "session_id": 1, "page": 1, "page_size": 20})` |
 | `get_llm_chat_message` | Get message by ID. | `raw.get_llm_chat_message(1)` |
 | `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply"})` |
 | `delete_llm_chat_message` | Delete message. | `raw.delete_llm_chat_message(1)` |
