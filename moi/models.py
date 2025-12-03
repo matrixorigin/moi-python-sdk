@@ -463,5 +463,92 @@ class VolumeRemoveRefWorkflowResponse:
     volume_id: VolumeID
 
 
+# ============ Data Analysis types ============
+
+
+@dataclass
+class DataAskingTableConfig:
+    """Table configuration for NL2SQL in data asking context."""
+    type: str  # "all", "none", "specified"
+    db_name: Optional[str] = None
+    table_list: List[str] = field(default_factory=list)
+
+
+@dataclass
+class FileConfig:
+    """File configuration for RAG."""
+    type: str  # "all", "none", "specified"
+    target_volume_name: Optional[str] = None
+    target_volume_id: Optional[str] = None
+    file_id_list: List[str] = field(default_factory=list)
+
+
+@dataclass
+class FilterConditions:
+    """Filter conditions."""
+    type: str  # "all", "non_inter_data"
+
+
+@dataclass
+class CodeGroup:
+    """Code group."""
+    name: str
+    values: List[str] = field(default_factory=list)
+
+
+@dataclass
+class DataScope:
+    """Data scope configuration."""
+    type: str  # "all", "specified"
+    code_type: Optional[int] = None  # 0-company, 1-business unit
+    code_group: List[CodeGroup] = field(default_factory=list)
+
+
+@dataclass
+class DataSource:
+    """Data source configuration."""
+    type: str  # "all", "specified"
+    tables: Optional[DataAskingTableConfig] = None
+    files: Optional[FileConfig] = None
+
+
+@dataclass
+class DataAnalysisConfig:
+    """Data analysis configuration."""
+    data_category: str  # "admin", "common"
+    filter_conditions: Optional[FilterConditions] = None
+    data_source: Optional[DataSource] = None
+    data_scope: Optional[DataScope] = None
+
+
+@dataclass
+class DataAnalysisRequest:
+    """Request for data analysis."""
+    question: str
+    source: Optional[str] = None
+    session_id: Optional[str] = None
+    session_name: Optional[str] = None
+    config: Optional[DataAnalysisConfig] = None
+
+
+@dataclass
+class QuestionType:
+    """Question classification result."""
+    type: str  # "query", "attribution"
+    confidence: float
+    reason: str
+
+
+@dataclass
+class DataAnalysisStreamEvent:
+    """Single event in the SSE stream."""
+    type: Optional[str] = None
+    source: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+    step_type: Optional[str] = None
+    step_name: Optional[str] = None
+    raw_data: Optional[bytes] = None  # Raw JSON data for flexible parsing
+
+
 # Additional sections (Tables, Files, Folders, Roles, Users, etc.) would follow
 # using the same pattern. For brevity, only the core structures are defined here.

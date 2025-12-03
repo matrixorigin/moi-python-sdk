@@ -10,7 +10,7 @@ import requests
 from .errors import ErrBaseURLRequired, ErrAPIKeyRequired, ErrNilRequest, APIError, HTTPError
 from .options import ClientOptions, CallOptions, ClientOption, CallOption
 from .response import APIEnvelope
-from .stream import FileStream
+from .stream import FileStream, DataAnalysisStream
 
 
 class RawClient:
@@ -1341,4 +1341,108 @@ class RawClient:
         from urllib.parse import quote
         path = f"/api/chat-messages/{message_id}/tags/{quote(source)}/{quote(name)}"
         return self._do_llm_json("DELETE", path, None, *opts)
+
+    # ----------------------------------------------------------------------
+    # Data Analysis APIs
+    # ----------------------------------------------------------------------
+
+    def analyze_data_stream(
+        self,
+        request: Optional[Dict[str, Any]],
+        *opts: CallOption
+    ) -> DataAnalysisStream:
+        """
+        Perform data analysis and return a streaming response.
+        
+        This method sends a POST request to /byoa/api/v1/data_asking/analyze and
+        returns a stream of Server-Sent Events (SSE) containing analysis results.
+        
+        The stream includes events such as:
+          - classification: Question classification result
+          - decomposition: Attribution question decomposition (attribution only)
+          - step_start: Step start (attribution only)
+          - step_complete: Step completion (attribution only)
+          - chunks/answer_chunk: RAG interface data (with source="rag")
+          - step_type/step_name: NL2SQL interface data (with source="nl2sql")
+          - complete: Analysis complete
+          - error: Error information
+        
+        Args:
+            request: DataAnalysisRequest dict with question and optional config
+            *opts: Optional call configuration options
+        
+        Returns:
+            DataAnalysisStream object for reading SSE events
+        
+        Example:
+            stream = client.analyze_data_stream({
+                "question": "2024年收入下降的原因是什么？",
+                "session_id": "session_123",
+                "config": {
+                    "data_category": "admin",
+                    "data_source": {
+                        "type": "all"
+                    }
+                }
+            })
+            try:
+                while True:
+                    event = stream.read_event()
+                    if event is None:
+                        break
+                    print(f"Event type: {event.type}")
+            finally:
+                stream.close()
+        """
+        if request is None:
+            raise ErrNilRequest("analyze_data_stream requires a request payload")
+        
+        question = request.get("question", "").strip() if isinstance(request, dict) else ""
+        if not question:
+            raise ValueError("question cannot be empty")
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build URL
+        path = "/byoa/api/v1/data_asking/analyze"
+        url = self._build_url(path, call_opts.query_params)
+        
+        # Serialize body
+        payload = self._prepare_body(request)
+        json_body = json.dumps(payload, default=str)
+        
+        # Build headers
+        headers = self._build_headers(call_opts, "application/json")
+        # Override Accept header for SSE
+        headers["Accept"] = "text/event-stream"
+        
+        # Make request with stream=True
+        response = self._http_client.request(
+            method="POST",
+            url=url,
+            headers=headers,
+            data=json_body,
+            timeout=self._timeout,
+            stream=True
+        )
+        
+        # Check for HTTP errors
+        if not (200 <= response.status_code < 300):
+            body = response.content
+            response.close()
+            raise HTTPError(response.status_code, body)
+        
+        # Check content type
+        content_type = response.headers.get("Content-Type", "")
+        if "text/event-stream" not in content_type and "text/plain" not in content_type:
+            # Not a streaming response, try to parse as error
+            body = response.content
+            response.close()
+            raise ValueError(f"unexpected content type: {content_type}, body: {body.decode('utf-8', errors='ignore')}")
+        
+        return DataAnalysisStream(response)
 
