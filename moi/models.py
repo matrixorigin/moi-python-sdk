@@ -550,5 +550,47 @@ class DataAnalysisStreamEvent:
     raw_data: Optional[bytes] = None  # Raw JSON data for flexible parsing
 
 
+# ============ Handler: Task types ============
+
+
+TaskID = int
+
+
+@dataclass
+class TaskInfoRequest:
+    """Request to get task information."""
+    task_id: TaskID
+
+
+@dataclass
+class LoadResult:
+    """Represents a single file load result."""
+    lines: int
+    reason: Optional[str] = None
+
+
+@dataclass
+class TaskInfoResponse:
+    """Task information response."""
+    id: str
+    source_connector_id: int
+    source_connector_type: str
+    volume_id: str
+    volume_name: str
+    volume_path: Optional[FullPath] = None
+    name: str = ""
+    creator: str = ""
+    status: str = ""
+    source_config: Optional[Dict[str, Any]] = None
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
+    created_at: str = ""
+    updated_at: str = ""
+    connector_name: Optional[str] = None
+    table_path: Optional[FullPath] = None
+    source_files: Optional[List[List[str]]] = None
+    load_results: Optional[List[LoadResult]] = None
+
+
 # Additional sections (Tables, Files, Folders, Roles, Users, etc.) would follow
 # using the same pattern. For brevity, only the core structures are defined here.

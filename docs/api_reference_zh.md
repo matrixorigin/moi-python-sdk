@@ -108,6 +108,12 @@ sdk = SDKClient(raw)
 | `download_connector_file` | 生成 connector 文件的下载链接。 | `raw.download_connector_file({"conn_file_id": conn_file_id})` |
 | `delete_connector_file` | 通过 `conn_file_id` 删除 connector 文件。 | `raw.delete_connector_file({"conn_file_id": conn_file_id})` |
 
+## 任务（Task）接口
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `get_task` | 根据任务 ID 获取任务的详细信息，包括状态、配置和结果。 | `raw.get_task({"task_id": 123})` |
+
 ## 用户（User）接口
 
 | 方法 | 描述 | 示例 |
@@ -208,6 +214,8 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `create_table_role` | 新建或复用仅包含表权限的角色，返回 `(role_id, created)`。 | `sdk.create_table_role("analytics_reader", "表级读权限", [TablePrivInfo(table_id=301, priv_codes=["DT8"])])` |
 | `update_table_role` | 更新表权限/全局权限，可自动保留未指定字段。 | `sdk.update_table_role(role_id, "", [TablePrivInfo(table_id=301, priv_codes=["DT8","DT9"])], global_privs=None)` |
 | `import_local_file_to_table` | 将已上传的本地文件导入目标表，自动拼好 MOI 所需参数（VolumeID、Meta 等）。 | `sdk.import_local_file_to_table({"new_table": False, "table_id": 301, "database_id": 201, "conn_file_ids": [conn_file_id], "existed_table": []})` |
+| `import_local_file_to_volume` | 将本地非结构化文件上传到目标数据卷，支持元数据和去重配置。 | `sdk.import_local_file_to_volume("/path/to/file.docx", "vol-1", {"filename": "file.docx", "path": "file.docx"}, {"by": ["name", "md5"], "strategy": "skip"})` |
+| `import_local_files_to_volume` | 将多个本地非结构化文件上传到目标数据卷，支持批量上传和自动生成元数据。 | `sdk.import_local_files_to_volume(["/path/to/file1.docx", "/path/to/file2.docx"], "vol-1", [{"filename": "file1.docx", "path": "file1.docx"}, {"filename": "file2.docx", "path": "file2.docx"}], {"by": ["name", "md5"], "strategy": "skip"})` |
 | `run_sql` | 通过 NL2SQL RunSQL 执行 SQL 语句。 | `sdk.run_sql("select * from sales.orders limit 10")` |
 
 这些高级方法复用了 Go SDK 中的业务逻辑，确保 Python 开发者可以以同样的方式完成角色管理与文件导入等场景。

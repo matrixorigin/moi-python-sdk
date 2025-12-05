@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field, asdict, is_dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, IO
 
 from .client import RawClient
 from .errors import ErrNilRequest
@@ -123,6 +123,177 @@ class SDKClient:
             "statement": statement,
         }
         return self.raw.run_nl2sql(payload, *opts)
+
+    def import_local_file_to_volume(
+        self,
+        file_path: str,
+        volume_id: str,
+        meta: Dict[str, str],
+        dedup: Optional[Dict[str, Any]] = None,
+        *opts: CallOption,
+    ) -> Any:
+        """
+        Upload a local unstructured file to a target volume.
+        
+        This is a high-level convenience method that uploads a local file to a volume
+        with metadata and deduplication configuration.
+        
+        Parameters:
+            file_path: the local file path to upload (required)
+            volume_id: the target volume ID (required)
+            meta: file metadata describing the file location in the target volume (required)
+                Format: {"filename": "file.docx", "path": "file.docx"}
+            dedup: deduplication configuration (optional)
+                Format: {"by": ["name", "md5"], "strategy": "skip"}
+        
+        Returns:
+            Response from the upload operation
+        
+        Example:
+            resp = sdk_client.import_local_file_to_volume(
+                "/path/to/file.docx",
+                "123456",
+                {"filename": "file.docx", "path": "file.docx"},
+                {"by": ["name", "md5"], "strategy": "skip"}
+            )
+            print(f"Uploaded file: {resp.get('file_id')}")
+        """
+        if not file_path or not file_path.strip():
+            raise ValueError("file_path is required")
+        if not volume_id:
+            raise ValueError("volume_id is required")
+        if not meta or not meta.get("filename"):
+            raise ValueError("meta.filename is required")
+        
+        # Open the local file
+        from pathlib import Path
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Open file and keep it open until upload completes
+        file_handle = path.open("rb")
+        try:
+            # Build file upload items
+            file_items = [(file_handle, path.name)]
+            
+            # Wrap meta in an array as required by upload_connector_file
+            meta_list = [meta]
+            
+            # Call the raw client's upload_connector_file method
+            return self.raw.upload_connector_file(
+                volume_id,
+                *opts,
+                file_items=file_items,
+                meta=meta_list,
+                dedup_config=dedup,
+            )
+        finally:
+            # Close file handle after upload completes
+            try:
+                file_handle.close()
+            except Exception:
+                pass
+
+    def import_local_files_to_volume(
+        self,
+        file_paths: List[str],
+        volume_id: str,
+        metas: Optional[List[Dict[str, str]]] = None,
+        dedup: Optional[Dict[str, Any]] = None,
+        *opts: CallOption,
+    ) -> Any:
+        """
+        Upload multiple local unstructured files to a target volume.
+        
+        This is a high-level convenience method that uploads multiple local files to a volume
+        with metadata and deduplication configuration.
+        
+        Parameters:
+            file_paths: array of local file paths to upload (required, must not be empty)
+            volume_id: the target volume ID (required)
+            metas: array of file metadata describing the file locations in the target volume (optional)
+                If provided, must have the same length as file_paths.
+                If empty or None, metadata will be auto-generated from file paths.
+                Format: [{"filename": "file1.docx", "path": "file1.docx"}, ...]
+            dedup: deduplication configuration (optional, applied to all files)
+                Format: {"by": ["name", "md5"], "strategy": "skip"}
+        
+        Returns:
+            Response from the upload operation
+        
+        Example:
+            resp = sdk_client.import_local_files_to_volume(
+                ["/path/to/file1.docx", "/path/to/file2.docx"],
+                "123456",
+                [
+                    {"filename": "file1.docx", "path": "file1.docx"},
+                    {"filename": "file2.docx", "path": "file2.docx"},
+                ],
+                {"by": ["name", "md5"], "strategy": "skip"}
+            )
+            print(f"Uploaded files, task_id: {resp.get('task_id')}")
+        """
+        if not file_paths or len(file_paths) == 0:
+            raise ValueError("at least one file path is required")
+        if not volume_id:
+            raise ValueError("volume_id is required")
+        
+        # Validate metas if provided
+        if metas is not None and len(metas) > 0 and len(metas) != len(file_paths):
+            raise ValueError(
+                f"metas array length ({len(metas)}) must match file_paths length ({len(file_paths)})"
+            )
+        
+        # Open all files and build file upload items
+        from pathlib import Path
+        
+        file_items: List[Tuple[IO[bytes], str]] = []
+        meta_list: List[Dict[str, str]] = []
+        file_handles: List[IO[bytes]] = []
+        
+        try:
+            for i, file_path in enumerate(file_paths):
+                if not file_path or not file_path.strip():
+                    raise ValueError(f"file_path[{i}] is empty")
+                
+                path = Path(file_path)
+                if not path.exists():
+                    raise FileNotFoundError(f"File not found: {file_path}")
+                
+                # Open the local file
+                file_handle = path.open("rb")
+                file_handles.append(file_handle)
+                
+                # Extract filename from path
+                file_name = path.name
+                
+                # Build file upload item
+                file_items.append((file_handle, file_name))
+                
+                # Build meta - use provided meta or auto-generate from file path
+                if metas and i < len(metas) and metas[i].get("filename"):
+                    # Use provided meta
+                    meta_list.append(metas[i])
+                else:
+                    # Auto-generate meta from file path
+                    meta_list.append({"filename": file_name, "path": file_name})
+            
+            # Call the raw client's upload_connector_file method
+            return self.raw.upload_connector_file(
+                volume_id,
+                *opts,
+                file_items=file_items,
+                meta=meta_list,
+                dedup_config=dedup,
+            )
+        finally:
+            # Close all opened files
+            for handle in file_handles:
+                try:
+                    handle.close()
+                except Exception:
+                    pass
 
     # ------------------------------------------------------------------
     # Helpers

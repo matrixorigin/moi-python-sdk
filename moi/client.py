@@ -759,6 +759,32 @@ class RawClient:
         return self._request_json("POST", "/connectors/file/delete", payload, *opts)
 
     # ----------------------------------------------------------------------
+    # Task APIs
+    # ----------------------------------------------------------------------
+
+    def get_task(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Retrieve detailed information about a task by its ID.
+        
+        This method queries the task information endpoint to get task details
+        including status, configuration, and results.
+        
+        Example:
+            resp = client.get_task({"task_id": 123})
+            print(f"Task: {resp['name']}, Status: {resp['status']}")
+        """
+        if request is None:
+            raise ErrNilRequest("get_task requires a request payload")
+        task_id = request.get("task_id")
+        if not task_id:
+            raise ValueError("task_id is required")
+        
+        # Add task_id as query parameter using with_query_param
+        from .options import with_query_param
+        opts = list(opts) + [with_query_param("task_id", str(task_id))]
+        return self._request_json("GET", "/task/get", None, *opts)
+
+    # ----------------------------------------------------------------------
     # User APIs
     # ----------------------------------------------------------------------
 
