@@ -3,7 +3,17 @@
 import os
 import tempfile
 import pytest
-from moi import RawClient, SDKClient, ErrNilRequest
+from moi import (
+    RawClient,
+    SDKClient,
+    ErrNilRequest,
+    new_dedup_config_skip_by_name_and_md5,
+    new_dedup_config_skip_by_name,
+    new_dedup_config_skip_by_md5,
+    DedupBy,
+    DedupStrategy,
+    new_dedup_config,
+)
 from tests.test_helpers import (
     get_test_client,
     create_test_catalog,
@@ -60,10 +70,7 @@ class TestImportLocalFileToVolumeAndGetTask:
                             "filename": test_file_name,
                             "path": test_file_name,
                         }
-                        dedup = {
-                            "by": ["name", "md5"],
-                            "strategy": "skip",
-                        }
+                        dedup = new_dedup_config_skip_by_name_and_md5()
                         
                         upload_resp = sdk_client.import_local_file_to_volume(
                             test_file_path, volume_id, meta, dedup
@@ -131,10 +138,7 @@ class TestImportLocalFilesToVolume:
                             {"filename": "test_file1.txt", "path": "test_file1.txt"},
                             {"filename": "test_file2.txt", "path": "test_file2.txt"},
                         ]
-                        dedup = {
-                            "by": ["name", "md5"],
-                            "strategy": "skip",
-                        }
+                        dedup = new_dedup_config_skip_by_name_and_md5()
                         
                         upload_resp = sdk_client.import_local_files_to_volume(
                             [test_file1, test_file2], volume_id, metas, dedup
@@ -176,10 +180,7 @@ class TestImportLocalFilesToVolume:
                             f.write(test_content2)
                         
                         # Test with auto-generated metas (None metas)
-                        dedup = {
-                            "by": ["name", "md5"],
-                            "strategy": "skip",
-                        }
+                        dedup = new_dedup_config_skip_by_name_and_md5()
                         
                         upload_resp = sdk_client.import_local_files_to_volume(
                             [test_file1, test_file2], volume_id, None, dedup
@@ -293,4 +294,53 @@ class TestImportLocalFilesToVolumeErrors:
             sdk_client.import_local_file_to_volume(
                 "/nonexistent/file.txt", "123456", {"filename": "test.txt"}, None
             )
+
+
+class TestDedupConfigHelpers:
+    """Test DedupConfig helper functions."""
+
+    def test_new_dedup_config(self):
+        """Test new_dedup_config helper function."""
+        # Test with name and MD5
+        dedup = new_dedup_config([DedupBy.NAME, DedupBy.MD5], DedupStrategy.SKIP)
+        assert dedup is not None
+        assert dedup.by == [DedupBy.NAME, DedupBy.MD5]
+        assert dedup.strategy == DedupStrategy.SKIP
+        
+        # Test with name only
+        dedup = new_dedup_config([DedupBy.NAME], DedupStrategy.SKIP)
+        assert dedup is not None
+        assert dedup.by == [DedupBy.NAME]
+        assert dedup.strategy == DedupStrategy.SKIP
+        
+        # Test with empty list (should return None)
+        dedup = new_dedup_config([], DedupStrategy.SKIP)
+        assert dedup is None
+        
+        # Test with replace strategy
+        dedup = new_dedup_config([DedupBy.MD5], DedupStrategy.REPLACE)
+        assert dedup is not None
+        assert dedup.by == [DedupBy.MD5]
+        assert dedup.strategy == DedupStrategy.REPLACE
+
+    def test_new_dedup_config_skip_by_name_and_md5(self):
+        """Test new_dedup_config_skip_by_name_and_md5 convenience function."""
+        dedup = new_dedup_config_skip_by_name_and_md5()
+        assert dedup is not None
+        assert dedup.by == [DedupBy.NAME, DedupBy.MD5]
+        assert dedup.strategy == DedupStrategy.SKIP
+
+    def test_new_dedup_config_skip_by_name(self):
+        """Test new_dedup_config_skip_by_name convenience function."""
+        dedup = new_dedup_config_skip_by_name()
+        assert dedup is not None
+        assert dedup.by == [DedupBy.NAME]
+        assert dedup.strategy == DedupStrategy.SKIP
+
+    def test_new_dedup_config_skip_by_md5(self):
+        """Test new_dedup_config_skip_by_md5 convenience function."""
+        dedup = new_dedup_config_skip_by_md5()
+        assert dedup is not None
+        assert dedup.by == [DedupBy.MD5]
+        assert dedup.strategy == DedupStrategy.SKIP
 

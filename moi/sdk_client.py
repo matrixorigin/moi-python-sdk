@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field, asdict, is_dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, IO
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, IO, Union
 
 from .client import RawClient
 from .errors import ErrNilRequest
 from .options import CallOption
+from .models import DedupConfig
 
 
 @dataclass
@@ -129,7 +130,7 @@ class SDKClient:
         file_path: str,
         volume_id: str,
         meta: Dict[str, str],
-        dedup: Optional[Dict[str, Any]] = None,
+        dedup: Optional[Union[DedupConfig, Dict[str, Any]]] = None,
         *opts: CallOption,
     ) -> Any:
         """
@@ -144,17 +145,19 @@ class SDKClient:
             meta: file metadata describing the file location in the target volume (required)
                 Format: {"filename": "file.docx", "path": "file.docx"}
             dedup: deduplication configuration (optional)
-                Format: {"by": ["name", "md5"], "strategy": "skip"}
+                Can be a DedupConfig object or a dict: {"by": ["name", "md5"], "strategy": "skip"}
         
         Returns:
             Response from the upload operation
         
         Example:
+            from moi.models import new_dedup_config_skip_by_name_and_md5
+            
             resp = sdk_client.import_local_file_to_volume(
                 "/path/to/file.docx",
                 "123456",
                 {"filename": "file.docx", "path": "file.docx"},
-                {"by": ["name", "md5"], "strategy": "skip"}
+                new_dedup_config_skip_by_name_and_md5()
             )
             print(f"Uploaded file: {resp.get('file_id')}")
         """
@@ -164,6 +167,16 @@ class SDKClient:
             raise ValueError("volume_id is required")
         if not meta or not meta.get("filename"):
             raise ValueError("meta.filename is required")
+        
+        # Convert DedupConfig to dict if needed
+        dedup_dict = None
+        if dedup is not None:
+            if isinstance(dedup, DedupConfig):
+                dedup_dict = asdict(dedup)
+            elif isinstance(dedup, dict):
+                dedup_dict = dedup
+            else:
+                raise TypeError("dedup must be a DedupConfig object or a dict")
         
         # Open the local file
         from pathlib import Path
@@ -186,7 +199,7 @@ class SDKClient:
                 *opts,
                 file_items=file_items,
                 meta=meta_list,
-                dedup_config=dedup,
+                dedup_config=dedup_dict,
             )
         finally:
             # Close file handle after upload completes
@@ -200,7 +213,7 @@ class SDKClient:
         file_paths: List[str],
         volume_id: str,
         metas: Optional[List[Dict[str, str]]] = None,
-        dedup: Optional[Dict[str, Any]] = None,
+        dedup: Optional[Union[DedupConfig, Dict[str, Any]]] = None,
         *opts: CallOption,
     ) -> Any:
         """
@@ -217,12 +230,14 @@ class SDKClient:
                 If empty or None, metadata will be auto-generated from file paths.
                 Format: [{"filename": "file1.docx", "path": "file1.docx"}, ...]
             dedup: deduplication configuration (optional, applied to all files)
-                Format: {"by": ["name", "md5"], "strategy": "skip"}
+                Can be a DedupConfig object or a dict: {"by": ["name", "md5"], "strategy": "skip"}
         
         Returns:
             Response from the upload operation
         
         Example:
+            from moi.models import new_dedup_config_skip_by_name_and_md5
+            
             resp = sdk_client.import_local_files_to_volume(
                 ["/path/to/file1.docx", "/path/to/file2.docx"],
                 "123456",
@@ -230,7 +245,7 @@ class SDKClient:
                     {"filename": "file1.docx", "path": "file1.docx"},
                     {"filename": "file2.docx", "path": "file2.docx"},
                 ],
-                {"by": ["name", "md5"], "strategy": "skip"}
+                new_dedup_config_skip_by_name_and_md5()
             )
             print(f"Uploaded files, task_id: {resp.get('task_id')}")
         """
@@ -238,6 +253,16 @@ class SDKClient:
             raise ValueError("at least one file path is required")
         if not volume_id:
             raise ValueError("volume_id is required")
+        
+        # Convert DedupConfig to dict if needed
+        dedup_dict = None
+        if dedup is not None:
+            if isinstance(dedup, DedupConfig):
+                dedup_dict = asdict(dedup)
+            elif isinstance(dedup, dict):
+                dedup_dict = dedup
+            else:
+                raise TypeError("dedup must be a DedupConfig object or a dict")
         
         # Validate metas if provided
         if metas is not None and len(metas) > 0 and len(metas) != len(file_paths):
@@ -285,7 +310,7 @@ class SDKClient:
                 *opts,
                 file_items=file_items,
                 meta=meta_list,
-                dedup_config=dedup,
+                dedup_config=dedup_dict,
             )
         finally:
             # Close all opened files

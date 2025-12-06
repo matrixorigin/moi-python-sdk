@@ -19,6 +19,13 @@ from .models import (
     DataScope,
     CodeGroup,
     QuestionType,
+    DedupBy,
+    DedupStrategy,
+    DedupConfig,
+    new_dedup_config,
+    new_dedup_config_skip_by_name_and_md5,
+    new_dedup_config_skip_by_name,
+    new_dedup_config_skip_by_md5,
 )
 
 __version__ = "0.1.0"
@@ -43,5 +50,12 @@ __all__ = [
     "DataScope",
     "CodeGroup",
     "QuestionType",
+    "DedupBy",
+    "DedupStrategy",
+    "DedupConfig",
+    "new_dedup_config",
+    "new_dedup_config_skip_by_name_and_md5",
+    "new_dedup_config_skip_by_name",
+    "new_dedup_config_skip_by_md5",
 ]
 

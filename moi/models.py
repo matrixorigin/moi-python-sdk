@@ -550,6 +550,98 @@ class DataAnalysisStreamEvent:
     raw_data: Optional[bytes] = None  # Raw JSON data for flexible parsing
 
 
+# ============ Models: File/Dedup types ============
+
+
+class DedupBy:
+    """Deduplication criteria constants."""
+    NAME = "name"  # Deduplicate files by filename
+    MD5 = "md5"    # Deduplicate files by MD5 hash
+
+
+class DedupStrategy:
+    """Deduplication strategy constants."""
+    SKIP = "skip"      # Skip duplicate files (does not upload)
+    REPLACE = "replace"  # Replace duplicate files
+
+
+@dataclass
+class DedupConfig:
+    """Deduplication configuration."""
+    by: List[str]
+    strategy: str
+
+
+def new_dedup_config(by: List[str], strategy: str) -> Optional[DedupConfig]:
+    """
+    Create a new DedupConfig with the specified criteria and strategy.
+    
+    This is a helper function to create DedupConfig in a type-safe way.
+    Use DedupBy constants for criteria and DedupStrategy constants for strategy.
+    
+    Args:
+        by: List of deduplication criteria (e.g., [DedupBy.NAME, DedupBy.MD5])
+        strategy: Deduplication strategy (e.g., DedupStrategy.SKIP)
+    
+    Returns:
+        DedupConfig instance, or None if by list is empty
+    
+    Example:
+        # Skip files that have the same name or MD5 hash
+        dedup = new_dedup_config([DedupBy.NAME, DedupBy.MD5], DedupStrategy.SKIP)
+        
+        # Skip files that have the same name
+        dedup = new_dedup_config([DedupBy.NAME], DedupStrategy.SKIP)
+    """
+    if not by or len(by) == 0:
+        return None
+    return DedupConfig(by=by, strategy=strategy)
+
+
+def new_dedup_config_skip_by_name_and_md5() -> DedupConfig:
+    """
+    Create a DedupConfig that skips files with the same name or MD5 hash.
+    
+    This is a convenience function for the most common deduplication scenario.
+    
+    Returns:
+        DedupConfig instance configured to skip by name and MD5
+    
+    Example:
+        dedup = new_dedup_config_skip_by_name_and_md5()
+        resp = sdk_client.import_local_file_to_volume(file_path, volume_id, meta, dedup)
+    """
+    return DedupConfig(by=[DedupBy.NAME, DedupBy.MD5], strategy=DedupStrategy.SKIP)
+
+
+def new_dedup_config_skip_by_name() -> DedupConfig:
+    """
+    Create a DedupConfig that skips files with the same name.
+    
+    Returns:
+        DedupConfig instance configured to skip by name
+    
+    Example:
+        dedup = new_dedup_config_skip_by_name()
+        resp = sdk_client.import_local_file_to_volume(file_path, volume_id, meta, dedup)
+    """
+    return DedupConfig(by=[DedupBy.NAME], strategy=DedupStrategy.SKIP)
+
+
+def new_dedup_config_skip_by_md5() -> DedupConfig:
+    """
+    Create a DedupConfig that skips files with the same MD5 hash.
+    
+    Returns:
+        DedupConfig instance configured to skip by MD5
+    
+    Example:
+        dedup = new_dedup_config_skip_by_md5()
+        resp = sdk_client.import_local_file_to_volume(file_path, volume_id, meta, dedup)
+    """
+    return DedupConfig(by=[DedupBy.MD5], strategy=DedupStrategy.SKIP)
+
+
 # ============ Handler: Task types ============
 
 
