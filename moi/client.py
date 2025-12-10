@@ -65,6 +65,38 @@ class RawClient:
         self._default_headers = cfg.default_headers.copy()
         self._timeout = cfg.timeout
     
+    def with_special_user(self, api_key: str) -> "RawClient":
+        """
+        Create a new RawClient with the same configuration but a different API key.
+        
+        The cloned client shares the same HTTP client instance but has its own API key.
+        Raises ValueError if the API key is empty.
+        
+        Args:
+            api_key: The new API key to use
+            
+        Returns:
+            A new RawClient instance with the new API key
+            
+        Example:
+            original = RawClient("https://api.example.com", "original-key")
+            new_client = original.with_special_user("new-key")
+        """
+        trimmed_key = api_key.strip()
+        if not trimmed_key:
+            raise ValueError("API key is required")
+        
+        # Create a new client with the same configuration but different API key
+        new_client = RawClient.__new__(RawClient)
+        new_client._base_url = self._base_url
+        new_client._api_key = trimmed_key
+        new_client._http_client = self._http_client  # Share the same HTTP client (thread-safe)
+        new_client._user_agent = self._user_agent
+        new_client._default_headers = self._default_headers.copy()  # Copy headers
+        new_client._timeout = self._timeout
+        
+        return new_client
+    
     def _build_url(self, path: str, query_params: Optional[Dict[str, Any]] = None) -> str:
         """Build a full URL from a path and optional query parameters."""
         if not path.startswith("/"):

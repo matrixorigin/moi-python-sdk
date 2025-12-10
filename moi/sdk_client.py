@@ -28,6 +28,26 @@ class SDKClient:
         if raw is None:
             raise ValueError("RawClient cannot be None")
         self.raw = raw
+    
+    def with_special_user(self, api_key: str) -> "SDKClient":
+        """
+        Create a new SDKClient with the same configuration but a different API key.
+        
+        The cloned client uses a cloned RawClient with the new API key.
+        Raises ValueError if the API key is empty.
+        
+        Args:
+            api_key: The new API key to use
+            
+        Returns:
+            A new SDKClient instance with the new API key
+            
+        Example:
+            original = SDKClient(RawClient("https://api.example.com", "original-key"))
+            new_client = original.with_special_user("new-key")
+        """
+        cloned_raw = self.raw.with_special_user(api_key)
+        return SDKClient(cloned_raw)
 
     # ------------------------------------------------------------------
     # Role helpers
