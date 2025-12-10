@@ -685,5 +685,27 @@ class TaskInfoResponse:
     load_results: Optional[List[LoadResult]] = None
 
 
-# Additional sections (Tables, Files, Folders, Roles, Users, etc.) would follow
+# ============ Handler: User types ============
+
+
+@dataclass
+class UserCreateRequest:
+    """Request to create a user."""
+    name: str
+    password: str
+    role_id_list: List[RoleID] = field(default_factory=list)
+    description: str = ""
+    phone: str = ""
+    email: str = ""
+    get_api_key: bool = False  # Whether to return API key in response
+
+
+@dataclass
+class UserCreateResponse:
+    """Response from creating a user."""
+    id: UserID
+    api_key: Optional[str] = None  # API key (only present if get_api_key was true in request)
+
+
+# Additional sections (Tables, Files, Folders, Roles, etc.) would follow
 # using the same pattern. For brevity, only the core structures are defined here.

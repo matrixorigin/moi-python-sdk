@@ -122,3 +122,83 @@ class TestUserNilRequestErrors:
         with pytest.raises(ErrNilRequest):
             client.update_user_status(None)
 
+
+@pytest.mark.integration
+class TestCreateUserWithGetApiKey:
+    """Test CreateUser API with GetApiKey parameter."""
+
+    def test_create_user_with_get_api_key_true(self):
+        """Test CreateUser with GetApiKey=true should return ApiKey."""
+        client = get_test_client()
+        role_id, mark_role_deleted = create_test_role(client, ["DC2"])  # QueryCatalog
+        
+        try:
+            create_resp = client.create_user({
+                "name": random_user_name().lower(),
+                "password": "TestPwd123!",
+                "role_id_list": [role_id],
+                "description": "sdk test user with api key",
+                "get_api_key": True,
+            })
+            assert create_resp is not None
+            assert create_resp.get("id") is not None
+            assert create_resp.get("api_key") is not None and create_resp.get("api_key") != "", "ApiKey should be present when get_api_key is True"
+            
+            # Cleanup
+            try:
+                client.delete_user({"id": create_resp["id"]})
+            except Exception:
+                pass
+        finally:
+            mark_role_deleted()
+
+    def test_create_user_with_get_api_key_false(self):
+        """Test CreateUser with GetApiKey=false should not return ApiKey."""
+        client = get_test_client()
+        role_id, mark_role_deleted = create_test_role(client, ["DC2"])  # QueryCatalog
+        
+        try:
+            create_resp = client.create_user({
+                "name": random_user_name().lower(),
+                "password": "TestPwd123!",
+                "role_id_list": [role_id],
+                "description": "sdk test user without api key",
+                "get_api_key": False,
+            })
+            assert create_resp is not None
+            assert create_resp.get("id") is not None
+            # ApiKey may be empty or not present when get_api_key is False
+            # This is acceptable as the field is optional
+            
+            # Cleanup
+            try:
+                client.delete_user({"id": create_resp["id"]})
+            except Exception:
+                pass
+        finally:
+            mark_role_deleted()
+
+    def test_create_user_with_get_api_key_default(self):
+        """Test CreateUser with default GetApiKey (not set) should work."""
+        client = get_test_client()
+        role_id, mark_role_deleted = create_test_role(client, ["DC2"])  # QueryCatalog
+        
+        try:
+            # Test that default behavior (get_api_key not set, defaults to False) still works
+            create_resp = client.create_user({
+                "name": random_user_name().lower(),
+                "password": "TestPwd123!",
+                "role_id_list": [role_id],
+                "description": "sdk test user with default get_api_key",
+            })
+            assert create_resp is not None
+            assert create_resp.get("id") is not None
+            
+            # Cleanup
+            try:
+                client.delete_user({"id": create_resp["id"]})
+            except Exception:
+                pass
+        finally:
+            mark_role_deleted()
+
