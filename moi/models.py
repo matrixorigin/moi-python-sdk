@@ -492,8 +492,9 @@ class FilterConditions:
 @dataclass
 class CodeGroup:
     """Code group."""
-    name: str
-    values: List[str] = field(default_factory=list)
+    code: str = ""  # Parent-level code
+    name: str = ""  # Code group name
+    values: List[str] = field(default_factory=list)  # Code value list
 
 
 @dataclass
