@@ -1300,6 +1300,79 @@ class RawClient:
         """
         return self._do_llm_json("GET", f"/api/sessions/{session_id}/messages/latest", None, *opts)
 
+    def modify_llm_session_message_response(self, session_id: int, message_id: int, modified_response: str, *opts: CallOption) -> Any:
+        """
+        Modify the modified_response field of a message in a session.
+        
+        The request body is sent as plain text (not JSON), containing the modified response content.
+        
+        Args:
+            session_id: The session ID
+            message_id: The message ID
+            modified_response: The modified response content (plain text)
+            *opts: Optional call configuration options
+        
+        Returns:
+            Response containing session_id, message_id, and modified_response
+        
+        Example:
+            resp = client.modify_llm_session_message_response(1, 10, "This is the modified response")
+            print(f"Modified message ID: {resp['message_id']}")
+        """
+        if self is None:
+            raise ValueError("sdk client is None")
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build full URL with /llm-proxy prefix
+        full_path = f"/llm-proxy/api/sessions/{session_id}/messages/{message_id}/modify-response"
+        url = self._build_url(full_path, call_opts.query_params)
+        
+        # Build headers
+        headers = self._build_headers(call_opts)
+        headers["Content-Type"] = "text/plain"
+        headers["Accept"] = "application/json"
+        
+        # Make request with plain text body
+        response = self._http_client.request(
+            method="PUT",
+            url=url,
+            headers=headers,
+            data=modified_response.encode('utf-8'),
+            timeout=self._timeout
+        )
+        
+        # Read response body
+        data = response.content
+        
+        # Check for error response format
+        if response.status_code >= 400:
+            try:
+                err_data = response.json()
+                if isinstance(err_data, dict) and "error" in err_data:
+                    error_info = err_data["error"]
+                    raise APIError(
+                        code=error_info.get("code", ""),
+                        message=error_info.get("message", ""),
+                        http_status=response.status_code
+                    )
+            except (json.JSONDecodeError, ValueError):
+                pass
+            # If not in error format, return HTTP error
+            raise HTTPError(response.status_code, data)
+        
+        # Parse successful response
+        if len(data) > 0 and data != b"null":
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                return data.decode('utf-8') if isinstance(data, bytes) else data
+        return None
+
     def create_llm_chat_message(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         """
         Create a new chat message record.
@@ -1333,10 +1406,20 @@ class RawClient:
         """
         Update a chat message.
         
+        Args:
+            message_id: The message ID
+            request: Dict with optional fields to update:
+                - status: Message status (e.g., "success", "failed")
+                - response: LLM reply content (for streaming, use CONCAT to append)
+                - modified_response: Modified reply content
+                - content: Actual content sent to LLM
+                - tags: Tag list (complete replacement)
+        
         Example:
             updated = client.update_llm_chat_message(1, {
                 "status": "success",
-                "response": "Updated response"
+                "response": "Updated response",
+                "modified_response": "Modified response"
             })
         """
         if request is None:

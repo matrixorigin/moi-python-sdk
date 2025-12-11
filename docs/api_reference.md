@@ -188,6 +188,7 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | `list_llm_session_messages` | List messages for session. Note: Does not return content fields. Use `get_llm_chat_message` for full content. | `raw.list_llm_session_messages(1, {"role": "user", "status": "success", "after": 5, "limit": 50})` |
 | `get_llm_session_latest_completed_message` | Get latest completed message ID (only success status). | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | Get latest message ID (regardless of status). | `raw.get_llm_session_latest_message(1)` |
+| `modify_llm_session_message_response` | Modify the modified_response field of a message in a session. | `raw.modify_llm_session_message_response(1, 10, "Modified response content")` |
 
 ### Chat Message Management
 
@@ -195,7 +196,7 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | --- | --- | --- |
 | `create_llm_chat_message` | Create chat message record. | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "Hello", "model": "gpt-4", "status": "success"})` |
 | `get_llm_chat_message` | Get message by ID. | `raw.get_llm_chat_message(1)` |
-| `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply"})` |
+| `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply", "modified_response": "Modified reply"})` |
 | `delete_llm_chat_message` | Delete message. | `raw.delete_llm_chat_message(1)` |
 | `update_llm_chat_message_tags` | Replace message tags. | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
 | `delete_llm_chat_message_tag` | Delete single tag from message. | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |

@@ -193,6 +193,7 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `list_llm_session_messages` | 列出会话中的消息。注意：不返回 content 字段，使用 `get_llm_chat_message` 获取完整内容。 | `raw.list_llm_session_messages(1, {"role": "user", "status": "success", "after": 5, "limit": 50})` |
 | `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID（仅成功状态）。 | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | 获取会话中最新消息 ID（无论状态）。 | `raw.get_llm_session_latest_message(1)` |
+| `modify_llm_session_message_response` | 修改会话中消息的 modified_response 字段。 | `raw.modify_llm_session_message_response(1, 10, "修改后的回复内容")` |
 
 ### 聊天消息管理
 
@@ -200,7 +201,7 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | --- | --- | --- |
 | `create_llm_chat_message` | 创建聊天消息记录。 | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "你好", "model": "gpt-4", "status": "success"})` |
 | `get_llm_chat_message` | 根据 ID 获取消息。 | `raw.get_llm_chat_message(1)` |
-| `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容"})` |
+| `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容", "modified_response": "修改后的回复"})` |
 | `delete_llm_chat_message` | 删除消息。 | `raw.delete_llm_chat_message(1)` |
 | `update_llm_chat_message_tags` | 替换消息标签（完全替换）。 | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
 | `delete_llm_chat_message_tag` | 删除消息中的单个标签。 | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |

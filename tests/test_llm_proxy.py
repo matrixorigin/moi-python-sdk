@@ -264,3 +264,86 @@ class TestLLMSessionMessages:
             except Exception:
                 pass
 
+
+
+@pytest.mark.integration
+class TestModifyLLMSessionMessageResponse:
+    """Test ModifyLLMSessionMessageResponse API."""
+
+    def test_modify_llm_session_message_response_nil_client(self):
+        """Test ModifyLLMSessionMessageResponse with nil client."""
+        client = None
+        with pytest.raises(ValueError) as exc_info:
+            client.modify_llm_session_message_response(1, 1, "test response")
+        assert "sdk client is None" in str(exc_info.value)
+
+    def test_modify_llm_session_message_response_live_flow(self):
+        """Test modifying a message's modified_response with a real backend."""
+        client = get_test_client()
+        
+        # Create a session first
+        user_id = random_name("user-")
+        session = client.create_llm_session({
+            "title": random_name("sdk-session-"),
+            "source": "sdk-test",
+            "user_id": user_id,
+        })
+        assert session is not None
+        session_id = session["id"]
+        
+        try:
+            # Create a message in the session
+            message = client.create_llm_chat_message({
+                "user_id": user_id,
+                "session_id": session_id,
+                "source": "sdk-test",
+                "role": "user",
+                "content": "Test message for modified response",
+                "model": "gpt-4",
+                "status": "success",
+                "response": "Original AI response",
+            })
+            assert message is not None
+            assert message["id"] > 0
+            message_id = message["id"]
+            
+            try:
+                # Verify initial state: modified_response should be empty
+                got_message = client.get_llm_chat_message(message_id)
+                assert got_message is not None
+                assert got_message.get("modified_response", "") == "", "Initial modified_response should be empty"
+                
+                # Modify the message's modified_response
+                modified_response = "This is the modified response content"
+                modify_resp = client.modify_llm_session_message_response(session_id, message_id, modified_response)
+                assert modify_resp is not None
+                assert modify_resp.get("session_id") == session_id
+                assert modify_resp.get("message_id") == message_id
+                assert modify_resp.get("modified_response") == modified_response
+                
+                # Verify the modification by getting the message again
+                got_message2 = client.get_llm_chat_message(message_id)
+                assert got_message2 is not None
+                assert got_message2.get("modified_response") == modified_response, "Modified response should be updated"
+                assert got_message2.get("response") == "Original AI response", "Original response should remain unchanged"
+                
+                # Update the modified_response again
+                modified_response2 = "Updated modified response content"
+                modify_resp2 = client.modify_llm_session_message_response(session_id, message_id, modified_response2)
+                assert modify_resp2 is not None
+                assert modify_resp2.get("modified_response") == modified_response2
+                
+                # Verify the update
+                got_message3 = client.get_llm_chat_message(message_id)
+                assert got_message3 is not None
+                assert got_message3.get("modified_response") == modified_response2, "Modified response should be updated again"
+            finally:
+                try:
+                    client.delete_llm_chat_message(message_id)
+                except Exception:
+                    pass
+        finally:
+            try:
+                client.delete_llm_session(session_id)
+            except Exception:
+                pass
