@@ -102,6 +102,7 @@ class CheckPriv:
 @dataclass
 class AuthorityCodeAndRule:
     code: str
+    black_column_list: List[str] = field(default_factory=list)
     rule_list: Optional[List["TableRowColRule"]] = None
 
 
@@ -109,6 +110,7 @@ class AuthorityCodeAndRule:
 class TableRowColExpression:
     operator: str
     expression: str
+    match_type: str = ""  # c,i,m,n,u
 
 
 @dataclass
@@ -130,6 +132,9 @@ class ObjPrivResponse:
 class PrivObjectIDAndName:
     object_id: str
     object_name: str
+    database_id: str = ""
+    object_type: str = ""
+    node_list: List["PrivObjectIDAndName"] = field(default_factory=list)
 
 
 # ============ Catalog types ============
