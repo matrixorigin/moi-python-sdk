@@ -347,3 +347,108 @@ class TestModifyLLMSessionMessageResponse:
                 client.delete_llm_session(session_id)
             except Exception:
                 pass
+
+
+@pytest.mark.integration
+class TestAppendLLMSessionMessageModifiedResponse:
+    """Test AppendLLMSessionMessageModifiedResponse API."""
+
+    def test_append_llm_session_message_modified_response_nil_client(self):
+        """Test AppendLLMSessionMessageModifiedResponse with nil client."""
+        client = None
+        with pytest.raises(ValueError) as exc_info:
+            client.append_llm_session_message_modified_response(1, 1, "test content")
+        assert "sdk client is None" in str(exc_info.value)
+
+    def test_append_llm_session_message_modified_response_live_flow(self):
+        """Test appending to a message's modified_response with a real backend."""
+        client = get_test_client()
+        
+        # Create a session first
+        user_id = random_name("user-")
+        session = client.create_llm_session({
+            "title": random_name("sdk-session-"),
+            "source": "sdk-test",
+            "user_id": user_id,
+        })
+        assert session is not None
+        session_id = session["id"]
+        
+        try:
+            # Create a message in the session
+            message = client.create_llm_chat_message({
+                "user_id": user_id,
+                "session_id": session_id,
+                "source": "sdk-test",
+                "role": "user",
+                "content": "Test message for append modified response",
+                "model": "gpt-4",
+                "status": "success",
+                "response": "Original AI response",
+            })
+            assert message is not None
+            assert message["id"] > 0
+            message_id = message["id"]
+            
+            try:
+                # Verify initial state: modified_response should be empty
+                got_message = client.get_llm_chat_message(message_id)
+                assert got_message is not None
+                assert got_message.get("modified_response", "") == "", "Initial modified_response should be empty"
+                
+                # First, set an initial modified_response
+                initial_modified_response = "Initial modified content"
+                client.modify_llm_session_message_response(session_id, message_id, initial_modified_response)
+                
+                # Verify initial modified_response
+                got_message1 = client.get_llm_chat_message(message_id)
+                assert got_message1 is not None
+                assert got_message1.get("modified_response") == initial_modified_response, "Initial modified_response should be set"
+                
+                # Append content to the modified_response
+                append_content1 = " - First append"
+                append_resp1 = client.append_llm_session_message_modified_response(session_id, message_id, append_content1)
+                assert append_resp1 is not None
+                assert append_resp1.get("session_id") == session_id
+                assert append_resp1.get("message_id") == message_id
+                assert append_resp1.get("append_content") == append_content1
+                
+                # Verify the append by getting the message again
+                got_message2 = client.get_llm_chat_message(message_id)
+                assert got_message2 is not None
+                expected_response1 = initial_modified_response + append_content1
+                assert got_message2.get("modified_response") == expected_response1, "Modified response should be appended"
+                assert got_message2.get("response") == "Original AI response", "Original response should remain unchanged"
+                
+                # Append more content
+                append_content2 = " - Second append"
+                append_resp2 = client.append_llm_session_message_modified_response(session_id, message_id, append_content2)
+                assert append_resp2 is not None
+                assert append_resp2.get("append_content") == append_content2
+                
+                # Verify the second append
+                got_message3 = client.get_llm_chat_message(message_id)
+                assert got_message3 is not None
+                expected_response2 = expected_response1 + append_content2
+                assert got_message3.get("modified_response") == expected_response2, "Modified response should be appended again"
+                
+                # Test appending to empty modified_response (after clearing it)
+                client.modify_llm_session_message_response(session_id, message_id, "")
+                
+                append_content3 = "New content from scratch"
+                append_resp3 = client.append_llm_session_message_modified_response(session_id, message_id, append_content3)
+                assert append_resp3 is not None
+                
+                got_message4 = client.get_llm_chat_message(message_id)
+                assert got_message4 is not None
+                assert got_message4.get("modified_response") == append_content3, "Appending to empty modified_response should work"
+            finally:
+                try:
+                    client.delete_llm_chat_message(message_id)
+                except Exception:
+                    pass
+        finally:
+            try:
+                client.delete_llm_session(session_id)
+            except Exception:
+                pass

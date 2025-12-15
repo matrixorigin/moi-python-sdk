@@ -194,6 +194,7 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `get_llm_session_latest_completed_message` | 获取会话中最新已完成的消息 ID（仅成功状态）。 | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | 获取会话中最新消息 ID（无论状态）。 | `raw.get_llm_session_latest_message(1)` |
 | `modify_llm_session_message_response` | 修改会话中消息的 modified_response 字段。 | `raw.modify_llm_session_message_response(1, 10, "修改后的回复内容")` |
+| `append_llm_session_message_modified_response` | 追加内容到会话中消息的 modified_response 字段。 | `raw.append_llm_session_message_modified_response(1, 10, "追加的内容")` |
 
 ### 聊天消息管理
 

@@ -1373,6 +1373,80 @@ class RawClient:
                 return data.decode('utf-8') if isinstance(data, bytes) else data
         return None
 
+    def append_llm_session_message_modified_response(self, session_id: int, message_id: int, append_content: str, *opts: CallOption) -> Any:
+        """
+        Append content to the modified_response field of a message in a session.
+        
+        The request body is sent as plain text (not JSON), containing the content to append.
+        The content will be appended to the existing modified_response field.
+        
+        Args:
+            session_id: The session ID
+            message_id: The message ID
+            append_content: The content to append (plain text)
+            *opts: Optional call configuration options
+        
+        Returns:
+            Response containing session_id, message_id, and append_content
+        
+        Example:
+            resp = client.append_llm_session_message_modified_response(1, 10, "Additional content to append")
+            print(f"Appended content to message ID: {resp['message_id']}")
+        """
+        if self is None:
+            raise ValueError("sdk client is None")
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build full URL with /llm-proxy prefix
+        full_path = f"/llm-proxy/api/sessions/{session_id}/messages/{message_id}/append-modified-response"
+        url = self._build_url(full_path, call_opts.query_params)
+        
+        # Build headers
+        headers = self._build_headers(call_opts)
+        headers["Content-Type"] = "text/plain"
+        headers["Accept"] = "application/json"
+        
+        # Make request with plain text body
+        response = self._http_client.request(
+            method="POST",
+            url=url,
+            headers=headers,
+            data=append_content.encode('utf-8'),
+            timeout=self._timeout
+        )
+        
+        # Read response body
+        data = response.content
+        
+        # Check for error response format
+        if response.status_code >= 400:
+            try:
+                err_data = response.json()
+                if isinstance(err_data, dict) and "error" in err_data:
+                    error_info = err_data["error"]
+                    raise APIError(
+                        code=error_info.get("code", ""),
+                        message=error_info.get("message", ""),
+                        http_status=response.status_code
+                    )
+            except (json.JSONDecodeError, ValueError):
+                pass
+            # If not in error format, return HTTP error
+            raise HTTPError(response.status_code, data)
+        
+        # Parse successful response
+        if len(data) > 0 and data != b"null":
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                return data.decode('utf-8') if isinstance(data, bytes) else data
+        return None
+
     def create_llm_chat_message(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         """
         Create a new chat message record.

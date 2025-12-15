@@ -189,6 +189,7 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | `get_llm_session_latest_completed_message` | Get latest completed message ID (only success status). | `raw.get_llm_session_latest_completed_message(1)` |
 | `get_llm_session_latest_message` | Get latest message ID (regardless of status). | `raw.get_llm_session_latest_message(1)` |
 | `modify_llm_session_message_response` | Modify the modified_response field of a message in a session. | `raw.modify_llm_session_message_response(1, 10, "Modified response content")` |
+| `append_llm_session_message_modified_response` | Append content to the modified_response field of a message in a session. | `raw.append_llm_session_message_modified_response(1, 10, "Additional content to append")` |
 
 ### Chat Message Management
 
