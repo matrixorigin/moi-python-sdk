@@ -7,9 +7,44 @@ helpers for role/table workflows.
 
 ## Installation
 
+### 方式一：从 PyPI 安装（推荐）
+
+如果包已发布到 PyPI，可以直接安装：
+
 ```bash
+pip install moi-python-sdk
+```
+
+### 方式二：从 GitHub 直接安装
+
+无需下载源码，直接从 GitHub 仓库安装：
+
+```bash
+pip install git+https://github.com/matrixorigin/moi-python-sdk.git
+```
+
+或者安装特定版本/分支：
+
+```bash
+# 安装特定分支
+pip install git+https://github.com/matrixorigin/moi-python-sdk.git@main
+
+# 安装特定标签版本
+pip install git+https://github.com/matrixorigin/moi-python-sdk.git@v0.1.0
+```
+
+### 方式三：本地开发安装
+
+如果需要修改源码或进行开发：
+
+```bash
+# 克隆仓库
+git clone https://github.com/matrixorigin/moi-python-sdk.git
+cd moi-python-sdk
+
+# 安装依赖和包
 pip install -r requirements.txt
-python setup.py install  # or pip install .
+pip install -e .  # 可编辑模式安装，修改代码后无需重新安装
 ```
 
 ## Quick Start
