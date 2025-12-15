@@ -167,6 +167,13 @@ sdk = SDKClient(raw)
 | `create_knowledge` / `update_knowledge` | 新增/更新 NL2SQL 知识项。 | `raw.create_knowledge({...})` |
 | `delete_knowledge` | 删除知识项。 | `raw.delete_knowledge({"id": 1})` |
 | `get_knowledge` | 查看知识项详情。 | `raw.get_knowledge({"id": 1})` |
+
+## 数据分析（Data Asking）接口
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `analyze_data_stream` | 执行数据分析并返回流式响应（SSE）。 | `stream = raw.analyze_data_stream({"question": "平均薪资是多少？", "config": {"data_category": "admin", "data_source": {"type": "all"}}}); event = stream.read_event(); stream.close()` |
+| `cancel_analyze` | 取消正在进行的数据分析请求。 | `raw.cancel_analyze({"request_id": "request-123"})` |
 | `list_knowledge` / `search_knowledge` | 分页或按条件列出知识项。 | `raw.list_knowledge({"page_number": 1, "page_size": 20})` |
 
 ## 健康检查与审计日志

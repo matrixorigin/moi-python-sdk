@@ -182,3 +182,88 @@ class TestAnalyzeDataStream:
         finally:
             stream.close()
 
+
+class TestCancelAnalyze:
+    """Test Cancel Analyze API."""
+
+    def test_cancel_analyze_nil_request(self):
+        """Test that nil request raises ErrNilRequest."""
+        client = get_test_client()
+        
+        with pytest.raises(ErrNilRequest):
+            client.cancel_analyze(None)
+
+    def test_cancel_analyze_empty_request_id(self):
+        """Test that empty request_id raises ValueError."""
+        client = get_test_client()
+        
+        req = {
+            "request_id": "",
+        }
+        with pytest.raises(ValueError, match="request_id cannot be empty"):
+            client.cancel_analyze(req)
+
+    @pytest.mark.integration
+    def test_cancel_analyze_live_flow(self):
+        """Test the cancel analyze API with a real backend."""
+        import json
+        
+        client = get_test_client()
+        
+        # First, start an analysis request to get a request_id
+        req = {
+            "question": "平均薪资是多少？",
+            "config": {
+                "data_category": "admin",
+                "data_source": {
+                    "type": "all"
+                }
+            }
+        }
+        
+        stream = client.analyze_data_stream(req)
+        assert stream is not None
+        assert stream.status_code == 200
+        
+        try:
+            # Read the first event to get request_id
+            event = stream.read_event()
+            if event is None:
+                pytest.skip("Could not get first event from stream, skipping cancel test")
+            
+            # Extract request_id from the init event
+            request_id = None
+            if event.step_type == "init":
+                # Parse the raw_data field to get request_id
+                if event.raw_data:
+                    try:
+                        init_data = json.loads(event.raw_data.decode('utf-8'))
+                        if isinstance(init_data, dict) and "data" in init_data:
+                            data = init_data["data"]
+                            if isinstance(data, dict) and "request_id" in data:
+                                request_id = data["request_id"]
+                    except (json.JSONDecodeError, KeyError, AttributeError):
+                        pass
+            
+            # Also try to get from event.data if available
+            if not request_id and event.data:
+                request_id = event.data.get("request_id")
+            
+            if not request_id:
+                pytest.skip("Could not extract request_id from stream, skipping cancel test")
+            
+            # Now cancel the request
+            cancel_req = {
+                "request_id": request_id
+            }
+            
+            cancel_resp = client.cancel_analyze(cancel_req)
+            assert cancel_resp is not None
+            assert cancel_resp.get("request_id") == request_id
+            assert cancel_resp.get("status") == "cancelled"
+            assert cancel_resp.get("user_id") is not None
+            print(f"Successfully cancelled request: {cancel_resp.get('request_id')}, "
+                  f"Status: {cancel_resp.get('status')}, UserID: {cancel_resp.get('user_id')}")
+        finally:
+            stream.close()
+

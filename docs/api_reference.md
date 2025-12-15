@@ -164,6 +164,13 @@ sdk = SDKClient(raw)
 | `list_knowledge` | Paginated list. | `raw.list_knowledge({"page_number": 1, "page_size": 20})` |
 | `search_knowledge` | Filter by key/type. | `raw.search_knowledge({"knowledge_key": "total sales"})` |
 
+## Data Analysis (Data Asking) APIs
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `analyze_data_stream` | Perform data analysis and return a streaming response (SSE). | `stream = raw.analyze_data_stream({"question": "平均薪资是多少？", "config": {"data_category": "admin", "data_source": {"type": "all"}}}); event = stream.read_event(); stream.close()` |
+| `cancel_analyze` | Cancel an ongoing data analysis request. | `raw.cancel_analyze({"request_id": "request-123"})` |
+
 ## Health & Log APIs
 
 | Method | Description | Example |

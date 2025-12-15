@@ -1637,3 +1637,62 @@ class RawClient:
         
         return DataAnalysisStream(response)
 
+    def cancel_analyze(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Cancel an ongoing data analysis request.
+        
+        This method sends a POST request to /byoa/api/v1/data_asking/cancel to cancel
+        a data analysis request that is currently in progress.
+        
+        The request_id parameter identifies the analysis request to cancel. Only the
+        user who initiated the request can cancel it.
+        
+        Args:
+            request: CancelAnalyzeRequest dict with request_id
+            *opts: Optional call configuration options
+        
+        Returns:
+            CancelAnalyzeResponse dict with request_id, status, user_id, and user_name
+        
+        Example:
+            resp = client.cancel_analyze({
+                "request_id": "request-123"
+            })
+            print(f"Cancelled request: {resp['request_id']}, Status: {resp['status']}")
+        """
+        if request is None:
+            raise ErrNilRequest("cancel_analyze requires a request payload")
+        
+        request_id = request.get("request_id", "").strip() if isinstance(request, dict) else ""
+        if not request_id:
+            raise ValueError("request_id cannot be empty")
+        
+        # Add request_id as query parameter
+        from .options import with_query_param
+        opts = list(opts) + [with_query_param("request_id", request_id)]
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build URL
+        path = "/byoa/api/v1/data_asking/cancel"
+        url = self._build_url(path, call_opts.query_params)
+        
+        # Build headers
+        headers = self._build_headers(call_opts)
+        
+        # Make POST request with empty body (request_id is in query params)
+        response = self._http_client.request(
+            method="POST",
+            url=url,
+            headers=headers,
+            data=None,
+            timeout=self._timeout
+        )
+        
+        # Parse response
+        return self._parse_response(response)
+

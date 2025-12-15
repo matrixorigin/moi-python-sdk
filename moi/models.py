@@ -556,6 +556,21 @@ class DataAnalysisStreamEvent:
     raw_data: Optional[bytes] = None  # Raw JSON data for flexible parsing
 
 
+@dataclass
+class CancelAnalyzeRequest:
+    """Request to cancel a data analysis request."""
+    request_id: str  # Required: The request ID of the analysis to cancel
+
+
+@dataclass
+class CancelAnalyzeResponse:
+    """Response from canceling a data analysis request."""
+    request_id: str  # The request ID that was cancelled
+    status: str  # Status after cancellation (typically "cancelled")
+    user_id: str  # User ID who cancelled the request
+    user_name: str = ""  # User name who cancelled the request
+
+
 # ============ Models: File/Dedup types ============
 
 
