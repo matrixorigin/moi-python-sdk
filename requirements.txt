@@ -1,3 +1,5 @@
-requests>=2.31.0
+# This file is kept for tooling that still expects pip-style requirements.
+# Edit pyproject.toml instead and regenerate with:
+#   uv pip compile pyproject.toml --group dev -o requirements.txt
+-e .
 pytest>=7.0.0
-
