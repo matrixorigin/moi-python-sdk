@@ -41,7 +41,25 @@ FileID = str
 UserID = int
 RoleID = int
 PrivID = int
+# PrivID constants (for reference):
+# Knowledge: PrivID_CreateKnowledge = 300, PrivID_QueryKnowledge = 301, PrivID_UpdateKnowledge = 302,
+#            PrivID_DeleteKnowledge = 303, PrivID_UseKnowledge = 304
+# Publication/Subscription: PrivID_CreatePublication = 400, PrivID_QueryPublication = 401,
+#                          PrivID_UpdatePublication = 402, PrivID_DeletePublication = 403,
+#                          PrivID_CreateSubscription = 404, PrivID_QuerySubscription = 405,
+#                          PrivID_UpdateSubscription = 406, PrivID_DeleteSubscription = 407,
+#                          PrivID_UseSubscription = 408
+
 PrivCode = str
+# PrivCode constants (for reference):
+# Knowledge: PrivCode_CreateKnowledge = "K1", PrivCode_QueryKnowledge = "K2",
+#            PrivCode_UpdateKnowledge = "K3", PrivCode_DeleteKnowledge = "K4",
+#            PrivCode_UseKnowledge = "K5"
+# Publication/Subscription: PrivCode_CreatePublication = "PS1", PrivCode_QueryPublication = "PS2",
+#                          PrivCode_UpdatePublication = "PS3", PrivCode_DeletePublication = "PS4",
+#                          PrivCode_QuerySubscription = "PS5", PrivCode_CreateSubscription = "PS6",
+#                          PrivCode_UpdateSubscription = "PS7", PrivCode_DeleteSubscription = "PS8"
+
 PrivObjectID = str
 ObjTypeValue = int
 PrivType = int
@@ -73,6 +91,9 @@ class ObjType(Enum):
     CATALOG = 11
     DATABASE = 12
     TABLE = 13
+    KNOWLEDGE = 14  # 知识库
+    PUBLICATION = 15  # 发布操作
+    SUBSCRIPTION = 16  # 订阅操作
 
     def __str__(self) -> str:  # pragma: no cover - trivial
         mapping = {
@@ -89,6 +110,9 @@ class ObjType(Enum):
             ObjType.CATALOG: "catalog",
             ObjType.DATABASE: "database",
             ObjType.TABLE: "table",
+            ObjType.KNOWLEDGE: "knowledge",
+            ObjType.PUBLICATION: "publication",
+            ObjType.SUBSCRIPTION: "subscription",
         }
         return mapping.get(self, "none")
 
