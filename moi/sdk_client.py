@@ -431,3 +431,245 @@ class SDKClient:
             "authority_code_list": acl,
         }
 
+    # ------------------------------------------------------------------
+    # Workflow helpers
+    # ------------------------------------------------------------------
+
+    def create_document_processing_workflow(
+        self,
+        workflow_name: str,
+        source_volume_id: str,
+        target_volume_id: str,
+        *opts: CallOption,
+    ) -> str:
+        """
+        Create a workflow for processing documents from a source volume to a target volume.
+        
+        This is a high-level convenience method that creates a complete document processing pipeline
+        with the following nodes:
+        - RootNode: Reads files from the source volume
+        - DocumentParseNode: Parses various document formats
+        - ChunkNode: Splits documents into chunks
+        - EmbedNode: Generates embeddings for document chunks
+        - WriteNode: Writes processed results to the target volume
+        
+        The workflow is configured to trigger automatically when files are loaded into the source volume
+        (ProcessMode.Interval = -1).
+        
+        Supported file types:
+        - Text files: TXT (1), Markdown (6), HTM (27), HTML (28)
+        - Office documents: PDF (2), PPT (4), DOCX (11), PPTX (12), XLS (24), XLSX (25)
+        - Spreadsheets: CSV (7)
+        
+        Args:
+            workflow_name: The name of the workflow (required)
+            source_volume_id: The source volume ID where source documents are located (required)
+            target_volume_id: The target volume ID where processed results will be written (required)
+            *opts: Optional call configuration options
+        
+        Returns:
+            The ID of the created workflow
+        
+        Example:
+            workflow_id = sdk.create_document_processing_workflow(
+                "My Workflow",
+                "source-vol-456",
+                "target-vol-123"
+            )
+        """
+        from .models import FileType
+        
+        if not target_volume_id or not target_volume_id.strip():
+            raise ValueError("target_volume_id is required")
+        if not source_volume_id or not source_volume_id.strip():
+            raise ValueError("source_volume_id is required")
+        if not workflow_name or not workflow_name.strip():
+            raise ValueError("workflow_name is required")
+        
+        # Build the workflow metadata with a complete document processing pipeline
+        req = {
+            "name": workflow_name,
+            "source_volume_ids": [source_volume_id],
+            "target_volume_id": target_volume_id,
+            # Supported file types: TXT, PDF, PPT, DOCX, Markdown, PPTX, CSV, XLS, XLSX, HTM, HTML
+            "file_types": [
+                FileType.TXT, FileType.PDF, FileType.PPT, FileType.DOCX,
+                FileType.MARKDOWN, FileType.PPTX, FileType.CSV,
+                FileType.XLS, FileType.XLSX, FileType.HTM, FileType.HTML,
+            ],
+            # ProcessMode with Interval = -1 means trigger on file load
+            "process_mode": {
+                "interval": -1,  # -1 means trigger on file load
+                "offset": 0,
+            },
+            # Complete document processing pipeline
+            "workflow": {
+                "nodes": [
+                    {
+                        "id": "RootNode_1",
+                        "type": "RootNode",
+                        "init_parameters": {},
+                    },
+                    {
+                        "id": "DocumentParseNode_2",
+                        "type": "DocumentParseNode",
+                        "init_parameters": {},
+                    },
+                    {
+                        "id": "ChunkNode_4",
+                        "type": "ChunkNode",
+                        "init_parameters": {},
+                    },
+                    {
+                        "id": "EmbedNode_5",
+                        "type": "EmbedNode",
+                        "init_parameters": {},
+                    },
+                    {
+                        "id": "WriteNode_6",
+                        "type": "WriteNode",
+                        "init_parameters": {},
+                    },
+                ],
+                "connections": [
+                    {
+                        "sender": "RootNode_1",
+                        "receiver": "DocumentParseNode_2",
+                    },
+                    {
+                        "sender": "DocumentParseNode_2",
+                        "receiver": "ChunkNode_4",
+                    },
+                    {
+                        "sender": "ChunkNode_4",
+                        "receiver": "EmbedNode_5",
+                    },
+                    {
+                        "sender": "EmbedNode_5",
+                        "receiver": "WriteNode_6",
+                    },
+                ],
+            },
+        }
+        
+        resp = self.raw.create_workflow(req, *opts)
+        if not resp or not isinstance(resp, dict) or not resp.get("id"):
+            raise ValueError("workflow created but ID is empty")
+        
+        return resp["id"]
+
+    def get_workflow_job(
+        self,
+        workflow_id: str,
+        source_file_id: str,
+        *opts: CallOption,
+    ) -> Dict[str, Any]:
+        """
+        Retrieve a single workflow job by workflow ID and source file ID.
+        
+        This is a high-level convenience method that queries workflow jobs using list_workflow_jobs
+        with filters for workflow ID and source file ID, then returns the first matching job.
+        
+        Args:
+            workflow_id: The workflow ID (required)
+            source_file_id: The source file ID (required)
+            *opts: Optional call configuration options
+        
+        Returns:
+            The matching workflow job dict
+        
+        Example:
+            job = sdk.get_workflow_job("workflow-123", "file-456")
+            print(f"Job ID: {job['job_id']}, Status: {job['status']}")
+        """
+        if not workflow_id or not workflow_id.strip():
+            raise ValueError("workflow_id is required")
+        if not source_file_id or not source_file_id.strip():
+            raise ValueError("source_file_id is required")
+        
+        # Query jobs with both filters
+        resp = self.raw.list_workflow_jobs({
+            "workflow_id": workflow_id,
+            "source_file_id": source_file_id,
+            "page": 1,
+            "page_size": 1,  # We only need one result
+        }, *opts)
+        
+        if not resp or not isinstance(resp, dict) or not resp.get("jobs") or len(resp["jobs"]) == 0:
+            raise ValueError(f"workflow job not found for workflow_id={workflow_id}, source_file_id={source_file_id}")
+        
+        # Return the first matching job
+        return resp["jobs"][0]
+
+    def wait_for_workflow_job(
+        self,
+        workflow_id: str,
+        source_file_id: str,
+        poll_interval: float = 2.0,
+        timeout: float = 60.0,
+        *opts: CallOption,
+    ) -> Dict[str, Any]:
+        """
+        Poll for a workflow job until it is found or the timeout expires.
+        
+        This method continuously queries for a workflow job matching the given workflow ID and source file ID
+        until either:
+        - The job is found (returns the job immediately)
+        - The timeout expires (raises an error)
+        
+        Args:
+            workflow_id: The workflow ID (required)
+            source_file_id: The source file ID (required)
+            poll_interval: The interval between polling attempts in seconds (default: 2.0)
+            timeout: The maximum time to wait in seconds (default: 60.0)
+            *opts: Optional call configuration options
+        
+        Returns:
+            The matching workflow job dict
+        
+        Example:
+            import time
+            job = sdk.wait_for_workflow_job("workflow-123", "file-456", poll_interval=2.0, timeout=30.0)
+            print(f"Job found: {job['job_id']}, Status: {job['status']}")
+        """
+        import time
+        
+        if not workflow_id or not workflow_id.strip():
+            raise ValueError("workflow_id is required")
+        if not source_file_id or not source_file_id.strip():
+            raise ValueError("source_file_id is required")
+        
+        if poll_interval <= 0:
+            poll_interval = 2.0
+        
+        if timeout <= 0:
+            timeout = 60.0
+        
+        start_time = time.time()
+        
+        # Try once immediately
+        try:
+            job = self.get_workflow_job(workflow_id, source_file_id, *opts)
+            if job:
+                return job
+        except ValueError:
+            pass  # Job not found yet, continue polling
+        
+        # Poll until found or timeout expires
+        while True:
+            elapsed = time.time() - start_time
+            if elapsed >= timeout:
+                raise TimeoutError(
+                    f"workflow job not found within timeout ({timeout}s) "
+                    f"for workflow_id={workflow_id}, source_file_id={source_file_id}"
+                )
+            
+            time.sleep(poll_interval)
+            
+            try:
+                job = self.get_workflow_job(workflow_id, source_file_id, *opts)
+                if job:
+                    return job
+            except ValueError:
+                pass  # Job not found yet, continue polling
+

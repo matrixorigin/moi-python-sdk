@@ -152,6 +152,21 @@ sdk = SDKClient(raw)
 | `get_genai_job` | Inspect job status/files. | `raw.get_genai_job("job-123")` |
 | `download_genai_result` | Stream result file via `FileStream`. | `stream = raw.download_genai_result("file-xyz"); data = stream.read(); stream.close()` |
 
+## Workflow APIs
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `create_workflow` | Create a new workflow with nodes and connections. | `raw.create_workflow({"name": "my-workflow", "source_volume_ids": ["vol-123"], "target_volume_id": "vol-456", "process_mode": {"interval": -1, "offset": 0}, "workflow": {"nodes": [...], "connections": [...]}})` |
+| `list_workflow_jobs` | List workflow jobs with optional filtering and pagination. | `raw.list_workflow_jobs({"workflow_id": "workflow-123", "page": 1, "page_size": 20})` |
+
+### SDKClient Workflow Helpers
+
+| Method | Description | Example |
+| --- | --- | --- |
+| `create_document_processing_workflow` | Create a complete document processing pipeline workflow. | `workflow_id = sdk.create_document_processing_workflow("My Workflow", "source-vol-456", "target-vol-123")` |
+| `get_workflow_job` | Retrieve a single workflow job by workflow ID and source file ID. | `job = sdk.get_workflow_job("workflow-123", "file-456")` |
+| `wait_for_workflow_job` | Poll for a workflow job until it is found or timeout expires. | `job = sdk.wait_for_workflow_job("workflow-123", "file-456", poll_interval=2.0, timeout=60.0)` |
+
 ## NL2SQL & Knowledge APIs
 
 | Method | Description | Example |

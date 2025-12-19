@@ -996,6 +996,191 @@ class RawClient:
         return FileStream(response)
 
     # ----------------------------------------------------------------------
+    # Workflow APIs
+    # ----------------------------------------------------------------------
+
+    def create_workflow(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Create a new workflow.
+        
+        This method creates a workflow using workflow metadata, which includes:
+        - Workflow name
+        - Source volume names/IDs
+        - Target volume ID/name
+        - Process mode (interval and offset)
+        - File types
+        - Workflow definition (nodes and connections)
+        
+        Args:
+            request: WorkflowMetadata dict with workflow configuration
+            *opts: Optional call configuration options
+        
+        Returns:
+            WorkflowCreateResponse dict with workflow ID and metadata
+        
+        Example:
+            resp = client.create_workflow({
+                "name": "my-workflow",
+                "source_volume_ids": ["vol-123"],
+                "target_volume_id": "vol-456",
+                "file_types": [1, 2, 3],
+                "process_mode": {
+                    "interval": 3600,
+                    "offset": 0
+                },
+                "workflow": {
+                    "nodes": [
+                        {
+                            "id": "node1",
+                            "type": "ParseNode",
+                            "init_parameters": {}
+                        }
+                    ],
+                    "connections": [
+                        {
+                            "sender": "node1",
+                            "receiver": "node2"
+                        }
+                    ]
+                }
+            })
+        """
+        if request is None:
+            raise ErrNilRequest("create_workflow requires a request payload")
+        
+        # Ensure required fields are initialized to avoid serializing them as null
+        # The server requires these fields to be present even if empty
+        if "source_volume_names" not in request or request["source_volume_names"] is None:
+            request["source_volume_names"] = []
+        if "source_volume_ids" not in request or request["source_volume_ids"] is None:
+            request["source_volume_ids"] = []
+        if "process_mode" not in request or request["process_mode"] is None:
+            request["process_mode"] = {
+                "interval": -1,  # Default: trigger on file load
+                "offset": 0
+            }
+        if "file_types" not in request or request["file_types"] is None:
+            request["file_types"] = []
+        
+        # Ensure all workflow nodes have InitParameters initialized to empty dict
+        # to avoid serializing them as null
+        if "workflow" in request and request["workflow"] is not None:
+            workflow = request["workflow"]
+            if "nodes" in workflow and workflow["nodes"] is not None:
+                for node in workflow["nodes"]:
+                    if "init_parameters" not in node or node["init_parameters"] is None:
+                        node["init_parameters"] = {}
+        
+        return self._request_json("POST", "/v1/genai/workflow", request, *opts)
+
+    def list_workflow_jobs(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        List workflow jobs with optional filtering and pagination.
+        
+        This method calls the workflow-be API endpoint /byoa/api/v1/workflow_job to retrieve
+        a list of workflow jobs. The request supports filtering by workflow ID, source file ID, and status,
+        as well as pagination.
+        
+        Args:
+            request: WorkflowJobListRequest dict with optional filters and pagination parameters:
+                - workflow_id: Filter by workflow ID
+                - source_file_id: Filter by source file ID
+                - status: Filter by job status
+                - page: Page number (starts from 1, default 1)
+                - page_size: Page size (default 20)
+            *opts: Optional call configuration options
+        
+        Returns:
+            WorkflowJobListResponse dict with jobs list and total count
+        
+        Example:
+            resp = client.list_workflow_jobs({
+                "workflow_id": "workflow-123",
+                "status": "running",
+                "page": 1,
+                "page_size": 20
+            })
+            for job in resp["jobs"]:
+                print(f"Job: {job['job_id']}, Status: {job['status']}")
+        """
+        if request is None:
+            raise ErrNilRequest("list_workflow_jobs requires a request payload")
+        
+        # Build query parameters
+        from .options import with_query_param
+        opts_list = list(opts)
+        
+        if request.get("workflow_id"):
+            opts_list.append(with_query_param("workflow_id", request["workflow_id"]))
+        if request.get("source_file_id"):
+            opts_list.append(with_query_param("source_file_id", request["source_file_id"]))
+        if request.get("status"):
+            opts_list.append(with_query_param("status", request["status"]))
+        if request.get("page", 0) > 0:
+            opts_list.append(with_query_param("page", str(request["page"])))
+        if request.get("page_size", 0) > 0:
+            opts_list.append(with_query_param("page_size", str(request["page_size"])))
+        
+        # Make GET request
+        call_opts = CallOptions()
+        for opt in opts_list:
+            if opt is not None:
+                opt(call_opts)
+        
+        path = "/byoa/api/v1/workflow_job"
+        url = self._build_url(path, call_opts.query_params)
+        
+        headers = self._build_headers(call_opts)
+        
+        response = self._http_client.request(
+            method="GET",
+            url=url,
+            headers=headers,
+            data=None,
+            timeout=self._timeout
+        )
+        
+        # Parse response - API returns {"code":"ok","msg":"ok","data":{"total":1,"jobs":[...]}}
+        resp_data = self._parse_response(response)
+        
+        # Convert raw jobs to match WorkflowJob structure
+        # API returns status as int (1=running, 2=completed, 3=failed)
+        if isinstance(resp_data, dict) and "jobs" in resp_data:
+            jobs = resp_data["jobs"]
+            converted_jobs = []
+            source_file_id = request.get("source_file_id", "")
+            
+            for raw_job in jobs:
+                job = {
+                    "job_id": raw_job.get("id", ""),
+                    "workflow_id": raw_job.get("workflow_id", ""),
+                    "source_file_id": source_file_id,  # Populate from request filter
+                    "status": raw_job.get("status", 0),  # Keep as int
+                    "start_time": raw_job.get("start_time", ""),
+                    "end_time": raw_job.get("end_time") or "",  # Handle null
+                }
+                
+                # Try to extract source_file_id from description if available
+                if not job["source_file_id"] and "description" in raw_job:
+                    desc = raw_job["description"]
+                    if isinstance(desc, dict) and "triggerTaskID" in desc:
+                        trigger_task_id = desc["triggerTaskID"]
+                        if isinstance(trigger_task_id, str):
+                            job["source_file_id"] = trigger_task_id
+                        elif isinstance(trigger_task_id, (int, float)):
+                            job["source_file_id"] = str(int(trigger_task_id))
+                
+                converted_jobs.append(job)
+            
+            resp_data["jobs"] = converted_jobs
+        
+        # Ensure jobs is never None
+        if isinstance(resp_data, dict) and "jobs" not in resp_data:
+            resp_data["jobs"] = []
+        
+        return resp_data
+
+    # ----------------------------------------------------------------------
     # NL2SQL APIs
     # ----------------------------------------------------------------------
 

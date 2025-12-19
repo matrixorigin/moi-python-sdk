@@ -159,6 +159,21 @@ sdk = SDKClient(raw)
 | `get_genai_job` | 查看任务状态及输出文件。 | `raw.get_genai_job("job-123")` |
 | `download_genai_result` | 下载任务产出，返回 `FileStream`。 | `stream = raw.download_genai_result("file-xyz"); data = stream.read(); stream.close()` |
 
+## 工作流（Workflow）接口
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `create_workflow` | 创建新的工作流，包含节点和连接。 | `raw.create_workflow({"name": "my-workflow", "source_volume_ids": ["vol-123"], "target_volume_id": "vol-456", "process_mode": {"interval": -1, "offset": 0}, "workflow": {"nodes": [...], "connections": [...]}})` |
+| `list_workflow_jobs` | 列出工作流任务，支持过滤和分页。 | `raw.list_workflow_jobs({"workflow_id": "workflow-123", "page": 1, "page_size": 20})` |
+
+### SDKClient 工作流辅助方法
+
+| 方法 | 描述 | 示例 |
+| --- | --- | --- |
+| `create_document_processing_workflow` | 创建完整的文档处理流水线工作流。 | `workflow_id = sdk.create_document_processing_workflow("我的工作流", "source-vol-456", "target-vol-123")` |
+| `get_workflow_job` | 根据工作流 ID 和源文件 ID 获取单个工作流任务。 | `job = sdk.get_workflow_job("workflow-123", "file-456")` |
+| `wait_for_workflow_job` | 轮询等待工作流任务直到找到或超时。 | `job = sdk.wait_for_workflow_job("workflow-123", "file-456", poll_interval=2.0, timeout=60.0)` |
+
 ## NL2SQL 与知识库接口
 
 | 方法 | 描述 | 示例 |

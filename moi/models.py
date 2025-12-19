@@ -751,5 +751,166 @@ class UserCreateResponse:
     api_key: Optional[str] = None  # API key (only present if get_api_key was true in request)
 
 
+# ============ Models: File types ============
+
+class FileType:
+    """File type constants."""
+    UNKNOWN = 0
+    TXT = 1
+    PDF = 2
+    IMAGE = 3
+    PPT = 4
+    DOC = 5
+    MARKDOWN = 6
+    CSV = 7
+    PARQUET = 8
+    SQL_FILES = 9
+    DIR = 10
+    DOCX = 11
+    PPTX = 12
+    WAV = 13
+    MP3 = 14
+    AAC = 15
+    FLAC = 16
+    MP4 = 17
+    MOV = 18
+    MKV = 19
+    PNG = 20
+    JPG = 21
+    JPEG = 22
+    BMP = 23
+    XLS = 24
+    XLSX = 25
+    HTM = 27
+    HTML = 28
+    EML = 29
+    MSG = 30
+    P7S = 31
+    DWG = 32
+    DXF = 33
+    FAS = 34
+
+
+# ============ Handler: Workflow types ============
+
+@dataclass
+class ProcessMode:
+    """Processing mode for workflows."""
+    interval: int  # Processing interval in seconds
+    offset: int = 0  # Processing offset in seconds
+
+
+class WorkflowJobStatus:
+    """Workflow job status constants."""
+    UNKNOWN = 0
+    RUNNING = 1
+    COMPLETED = 2
+    FAILED = 3
+    
+    @staticmethod
+    def to_string(status: int) -> str:
+        """Convert status integer to string."""
+        if status == WorkflowJobStatus.RUNNING:
+            return "running"
+        elif status == WorkflowJobStatus.COMPLETED:
+            return "completed"
+        elif status == WorkflowJobStatus.FAILED:
+            return "failed"
+        elif status == WorkflowJobStatus.UNKNOWN:
+            return "unknown"
+        else:
+            return f"unknown({status})"
+
+
+@dataclass
+class WorkflowMetadata:
+    """Workflow metadata for creating a workflow."""
+    name: str = ""
+    source_volume_names: List[str] = field(default_factory=list)  # Required: must be present even if empty
+    source_volume_ids: List[str] = field(default_factory=list)  # Required: must be present even if empty
+    target_volume_name: str = ""  # deprecated at moi 3.2.4
+    target_volume_id: str = ""
+    create_target_volume_name: str = ""
+    process_mode: Optional[ProcessMode] = None  # Required: must be present even if empty
+    file_types: List[int] = field(default_factory=list)
+    workflow: Optional["CatalogWorkflow"] = None
+
+
+@dataclass
+class CatalogWorkflow:
+    """Workflow definition with nodes and connections."""
+    nodes: List["CatalogWorkflowNode"] = field(default_factory=list)
+    connections: List["CatalogWorkflowConnection"] = field(default_factory=list)
+
+
+@dataclass
+class CatalogWorkflowNode:
+    """Workflow node definition."""
+    id: str
+    type: str
+    init_parameters: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # Required: must be present, use empty dict {} if no parameters
+
+
+@dataclass
+class CatalogWorkflowConnection:
+    """Workflow connection definition."""
+    sender: str
+    receiver: str  # Note: JSON may use "reciever" instead of "receiver" (typo)
+    sender_port: str = ""  # Optional port for sender component
+    receiver_port: str = ""  # Optional port for receiver component
+
+
+@dataclass
+class WorkflowCreateResponse:
+    """Response from creating a workflow."""
+    created_at: str = ""
+    creator: str = ""
+    content: str = ""
+    updated_at: str = ""
+    modifier: str = ""
+    id: str = ""
+    file_types: str = ""
+    name: str = ""
+    source_volume_ids: str = ""
+    user_id: str = ""
+    source_volume_names: str = ""
+    group_id: str = ""
+    target_volume_id: str = ""
+    version: str = ""
+    flow_interval: int = 0
+    target_volume_name: str = ""
+    priority: int = 0
+    flow_offset: int = 0
+    files: str = ""
+
+
+@dataclass
+class WorkflowJobListRequest:
+    """Request to list workflow jobs."""
+    workflow_id: str = ""  # Filter by workflow ID
+    source_file_id: str = ""  # Filter by source file ID
+    status: str = ""  # Filter by job status
+    page: int = 0  # Page number (starts from 1, default 1)
+    page_size: int = 0  # Page size (default 20)
+
+
+@dataclass
+class WorkflowJob:
+    """Workflow job in the list."""
+    job_id: str  # Job ID (API returns "id")
+    workflow_id: str  # Workflow ID
+    source_file_id: str = ""  # Source file ID (not in API response, populated from query param)
+    status: int = 0  # Job status (API returns number: 1=running, 2=completed, 3=failed)
+    start_time: str = ""  # Job start time
+    end_time: str = ""  # Job end time (empty if not finished)
+
+
+@dataclass
+class WorkflowJobListResponse:
+    """Response from listing workflow jobs."""
+    jobs: List[WorkflowJob] = field(default_factory=list)  # List of workflow jobs (API returns "jobs" not "list")
+    total: int = 0  # Total number of jobs
+
+
 # Additional sections (Tables, Files, Folders, Roles, etc.) would follow
 # using the same pattern. For brevity, only the core structures are defined here.
