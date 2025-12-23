@@ -1636,6 +1636,19 @@ class RawClient:
         """
         Create a new chat message record.
         
+        Args:
+            request: Dict with message fields:
+                - user_id: User ID (required)
+                - source: Source identifier (required)
+                - role: Message role (required, e.g., "user", "assistant")
+                - content: Message content (required)
+                - model: Model name (required)
+                - session_id: Session ID (optional)
+                - status: Message status (optional, default: "success")
+                - response: LLM reply content (optional)
+                - config: Message configuration as JSON string (optional)
+                - tags: Tag names list (optional)
+        
         Example:
             msg = client.create_llm_chat_message({
                 "user_id": "user123",
@@ -1644,6 +1657,7 @@ class RawClient:
                 "content": "Hello, world!",
                 "model": "gpt-4",
                 "status": "success",
+                "config": '{"temperature": 0.7}',
                 "tags": ["tag1", "tag2"]
             })
         """
@@ -1672,13 +1686,15 @@ class RawClient:
                 - response: LLM reply content (for streaming, use CONCAT to append)
                 - modified_response: Modified reply content
                 - content: Actual content sent to LLM
+                - config: Message configuration as JSON string (optional)
                 - tags: Tag list (complete replacement)
         
         Example:
             updated = client.update_llm_chat_message(1, {
                 "status": "success",
                 "response": "Updated response",
-                "modified_response": "Modified response"
+                "modified_response": "Modified response",
+                "config": '{"temperature": 0.8}'
             })
         """
         if request is None:

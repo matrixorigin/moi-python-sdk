@@ -222,9 +222,9 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 
 | 方法 | 描述 | 示例 |
 | --- | --- | --- |
-| `create_llm_chat_message` | 创建聊天消息记录。 | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "你好", "model": "gpt-4", "status": "success"})` |
+| `create_llm_chat_message` | 创建聊天消息记录。 | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "你好", "model": "gpt-4", "status": "success", "config": '{"temperature": 0.7}'})` |
 | `get_llm_chat_message` | 根据 ID 获取消息。 | `raw.get_llm_chat_message(1)` |
-| `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容", "modified_response": "修改后的回复"})` |
+| `update_llm_chat_message` | 更新消息。 | `raw.update_llm_chat_message(1, {"status": "success", "response": "回复内容", "modified_response": "修改后的回复", "config": '{"temperature": 0.8}'})` |
 | `delete_llm_chat_message` | 删除消息。 | `raw.delete_llm_chat_message(1)` |
 | `update_llm_chat_message_tags` | 替换消息标签（完全替换）。 | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
 | `delete_llm_chat_message_tag` | 删除消息中的单个标签。 | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |

@@ -217,9 +217,9 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 
 | Method | Description | Example |
 | --- | --- | --- |
-| `create_llm_chat_message` | Create chat message record. | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "Hello", "model": "gpt-4", "status": "success"})` |
+| `create_llm_chat_message` | Create chat message record. | `raw.create_llm_chat_message({"user_id": "user123", "source": "my-app", "role": "user", "content": "Hello", "model": "gpt-4", "status": "success", "config": '{"temperature": 0.7}'})` |
 | `get_llm_chat_message` | Get message by ID. | `raw.get_llm_chat_message(1)` |
-| `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply", "modified_response": "Modified reply"})` |
+| `update_llm_chat_message` | Update message. | `raw.update_llm_chat_message(1, {"status": "success", "response": "Reply", "modified_response": "Modified reply", "config": '{"temperature": 0.8}'})` |
 | `delete_llm_chat_message` | Delete message. | `raw.delete_llm_chat_message(1)` |
 | `update_llm_chat_message_tags` | Replace message tags. | `raw.update_llm_chat_message_tags(1, {"tags": ["tag1", "tag2"]})` |
 | `delete_llm_chat_message_tag` | Delete single tag from message. | `raw.delete_llm_chat_message_tag(1, "my-app", "tag1")` |
