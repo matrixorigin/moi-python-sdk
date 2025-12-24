@@ -236,6 +236,7 @@ LLM Proxy APIs use `/llm-proxy` prefix and return data directly (no envelope wra
 | `import_local_file_to_table` | Import already uploaded file(s) into table using connector workflow. | `sdk.import_local_file_to_table({"new_table": False, "table_id": 301, "database_id": 201, "conn_file_ids": [conn_file_id], "existed_table": []})` |
 | `import_local_file_to_volume` | Upload a local unstructured file to a target volume with metadata and deduplication. | `sdk.import_local_file_to_volume("/path/to/file.docx", "vol-1", {"filename": "file.docx", "path": "file.docx"}, {"by": ["name", "md5"], "strategy": "skip"})` |
 | `import_local_files_to_volume` | Upload multiple local unstructured files to a target volume. | `sdk.import_local_files_to_volume(["/path/to/file1.docx", "/path/to/file2.docx"], "vol-1", [{"filename": "file1.docx", "path": "file1.docx"}, {"filename": "file2.docx", "path": "file2.docx"}], {"by": ["name", "md5"], "strategy": "skip"})` |
+| `find_files_by_name` | Search for files by name within a specific volume. | `resp = sdk.find_files_by_name("许继电气：关于召开2", "vol-123"); for file in resp.get("list", []): print(f"Found: {file['name']}")` |
 | `run_sql` | Execute fully qualified SQL via NL2SQL RunSQL operation. | `sdk.run_sql("select * from sales.orders limit 10")` |
 
 These high-level helpers encapsulate the multi-step logic showcased in the Go

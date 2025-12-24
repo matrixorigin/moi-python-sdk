@@ -432,6 +432,72 @@ class SDKClient:
         }
 
     # ------------------------------------------------------------------
+    # File helpers
+    # ------------------------------------------------------------------
+
+    def find_files_by_name(
+        self,
+        file_name: str,
+        volume_id: str,
+        *opts: CallOption,
+    ) -> Any:
+        """
+        Search for files by name within a specific volume.
+        
+        This is a high-level convenience method that uses list_files with filters
+        to find files matching the given file name in the specified volume.
+        The search is performed in the root directory (parent_id is empty).
+        
+        Args:
+            file_name: The file name to search for (required)
+            volume_id: The volume ID to search within (required)
+            *opts: Optional call configuration options
+        
+        Returns:
+            FileListResponse dict containing matching files
+        
+        Example:
+            resp = sdk.find_files_by_name("许继电气：关于召开2", "019b39fc-f4ee-7915-b701-66ae6a48d9fc")
+            for file in resp.get("list", []):
+                print(f"Found file: {file['name']} (ID: {file['id']})")
+        """
+        if not file_name or not file_name.strip():
+            raise ValueError("file_name is required")
+        if not volume_id or not volume_id.strip():
+            raise ValueError("volume_id is required")
+        
+        # Build the request with filters matching the provided JSON example
+        req = {
+            "keyword": "",
+            "common_condition": {
+                "page": 1,
+                "page_size": 10,
+                "order": "desc",
+                "order_by": "",
+                "filters": [
+                    {
+                        "name": "volume_id",
+                        "values": [volume_id],
+                        "fuzzy": False,
+                    },
+                    {
+                        "name": "parent_id",
+                        "values": [""],
+                        "fuzzy": False,
+                    },
+                    {
+                        "name": "file_name",
+                        "values": [file_name],
+                        "fuzzy": False,
+                    },
+                ],
+            },
+        }
+        
+        # Call the raw client's list_files method
+        return self.raw.list_files(req, *opts)
+
+    # ------------------------------------------------------------------
     # Workflow helpers
     # ------------------------------------------------------------------
 

@@ -241,6 +241,7 @@ LLM Proxy API 使用 `/llm-proxy` 前缀，响应格式为直接返回数据（�
 | `import_local_file_to_table` | 将已上传的本地文件导入目标表，自动拼好 MOI 所需参数（VolumeID、Meta 等）。 | `sdk.import_local_file_to_table({"new_table": False, "table_id": 301, "database_id": 201, "conn_file_ids": [conn_file_id], "existed_table": []})` |
 | `import_local_file_to_volume` | 将本地非结构化文件上传到目标数据卷，支持元数据和去重配置。 | `sdk.import_local_file_to_volume("/path/to/file.docx", "vol-1", {"filename": "file.docx", "path": "file.docx"}, {"by": ["name", "md5"], "strategy": "skip"})` |
 | `import_local_files_to_volume` | 将多个本地非结构化文件上传到目标数据卷，支持批量上传和自动生成元数据。 | `sdk.import_local_files_to_volume(["/path/to/file1.docx", "/path/to/file2.docx"], "vol-1", [{"filename": "file1.docx", "path": "file1.docx"}, {"filename": "file2.docx", "path": "file2.docx"}], {"by": ["name", "md5"], "strategy": "skip"})` |
+| `find_files_by_name` | 在指定数据卷中根据文件名称搜索文件。 | `resp = sdk.find_files_by_name("许继电气：关于召开2", "vol-123"); for file in resp.get("list", []): print(f"找到: {file['name']}")` |
 | `run_sql` | 通过 NL2SQL RunSQL 执行 SQL 语句。 | `sdk.run_sql("select * from sales.orders limit 10")` |
 
 这些高级方法复用了 Go SDK 中的业务逻辑，确保 Python 开发者可以以同样的方式完成角色管理与文件导入等场景。
