@@ -84,6 +84,13 @@ class DataAnalysisStream:
     The stream returns Server-Sent Events (SSE) format. Use read_event to read
     individual events from the stream.
     
+    The stream includes events such as:
+    - init: Initialization event (first event) with request_id and session_title
+      (step_type="init", data contains request_id and session_title)
+    - classification: Question classification result
+    - complete: Analysis complete
+    - error: Error information
+    
     Example:
         stream = client.analyze_data_stream({
             "question": "2024年收入下降的原因是什么？",
@@ -94,6 +101,11 @@ class DataAnalysisStream:
                 event = stream.read_event()
                 if event is None:  # EOF
                     break
+                # Check for init event
+                if event.step_type == "init":
+                    init_data = event.get_init_event_data()
+                    if init_data:
+                        print(f"Request ID: {init_data.request_id}, Session Title: {init_data.session_title}")
                 print(f"Event type: {event.type}")
         finally:
             stream.close()

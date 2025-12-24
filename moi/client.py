@@ -1828,6 +1828,8 @@ class RawClient:
         returns a stream of Server-Sent Events (SSE) containing analysis results.
         
         The stream includes events such as:
+          - init: Initialization event (first event) with request_id and session_title
+            (step_type="init", data contains request_id and session_title)
           - classification: Question classification result
           - decomposition: Attribution question decomposition (attribution only)
           - step_start: Step start (attribution only)
@@ -1937,7 +1939,7 @@ class RawClient:
             resp = client.cancel_analyze({
                 "request_id": "request-123"
             })
-            print(f"Cancelled request: {resp['request_id']}, Status: {resp['status']}")
+            print(f"Cancelled request: {resp['request_id']}, Status: {resp['status']}, User: {resp.get('user_name', '')}")
         """
         if request is None:
             raise ErrNilRequest("cancel_analyze requires a request payload")

@@ -499,17 +499,17 @@ class VolumeRemoveRefWorkflowResponse:
 class DataAskingTableConfig:
     """Table configuration for NL2SQL in data asking context."""
     type: str  # "all", "none", "specified"
-    db_name: Optional[str] = None
-    table_list: List[str] = field(default_factory=list)
+    db_name: str  # Required: database name
+    database_id: Optional[int] = None  # Database ID, used when type is "all"
+    table_list: List[str] = field(default_factory=list)  # Table name list, used when type is "specified"
 
 
 @dataclass
 class FileConfig:
     """File configuration for RAG."""
     type: str  # "all", "none", "specified"
-    target_volume_name: Optional[str] = None
-    target_volume_id: Optional[str] = None
-    file_id_list: List[str] = field(default_factory=list)
+    database_id: Optional[int] = None  # Database ID, used when type is "all"
+    file_id_list: List[str] = field(default_factory=list)  # File ID list, used when type is "specified"
 
 
 @dataclass
@@ -545,7 +545,9 @@ class DataSource:
 @dataclass
 class DataAnalysisConfig:
     """Data analysis configuration."""
-    data_category: str  # "admin", "common"
+    mcp_server_url: Optional[str] = None  # MCP server URL
+    data_object_type: str = "default"  # "default", "audit_related" (default: "default")
+    data_category: str = "admin"  # "admin", "common" (default: "admin")
     filter_conditions: Optional[FilterConditions] = None
     data_source: Optional[DataSource] = None
     data_scope: Optional[DataScope] = None
@@ -570,14 +572,75 @@ class QuestionType:
 
 
 @dataclass
+class InitEventData:
+    """Data field in an init event."""
+    request_id: str
+    session_title: str = ""
+
+
+@dataclass
 class DataAnalysisStreamEvent:
-    """Single event in the SSE stream."""
+    """
+    Single event in the SSE stream.
+    
+    Common event formats:
+    - init event: step_type="init", data contains request_id and session_title
+    - classification event: type="classification"
+    - events with step_type field: StepType field contains the step type (e.g., "init", "sql_generated")
+    - events with source field: Source field indicates the source (e.g., "rag", "nl2sql")
+    """
     type: Optional[str] = None
     source: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
-    step_type: Optional[str] = None
+    step_type: Optional[str] = None  # For events that don't have a "type" field but have step_type (e.g., step_type="init" for initialization)
     step_name: Optional[str] = None
     raw_data: Optional[bytes] = None  # Raw JSON data for flexible parsing
+    
+    def get_init_event_data(self) -> Optional[InitEventData]:
+        """
+        Extract request_id and session_title from an init event.
+        
+        Returns None if the event is not an init event or if the data cannot be parsed.
+        
+        Example:
+            event = stream.read_event()
+            if event.step_type == "init":
+                init_data = event.get_init_event_data()
+                if init_data:
+                    print(f"Request ID: {init_data.request_id}, Session Title: {init_data.session_title}")
+        """
+        if self.step_type != "init":
+            return None
+        
+        # Try to extract from Data field first
+        if self.data:
+            request_id = self.data.get("request_id", "")
+            session_title = self.data.get("session_title", "")
+            if request_id:
+                return InitEventData(
+                    request_id=request_id,
+                    session_title=session_title
+                )
+        
+        # Try to parse from RawData
+        if self.raw_data:
+            try:
+                import json
+                parsed = json.loads(self.raw_data.decode('utf-8'))
+                if isinstance(parsed, dict) and "data" in parsed:
+                    data = parsed["data"]
+                    if isinstance(data, dict):
+                        request_id = data.get("request_id", "")
+                        session_title = data.get("session_title", "")
+                        if request_id:
+                            return InitEventData(
+                                request_id=request_id,
+                                session_title=session_title
+                            )
+            except (json.JSONDecodeError, UnicodeDecodeError, KeyError):
+                pass
+        
+        return None
 
 
 @dataclass
