@@ -1,5 +1,6 @@
 """Tests for Table APIs."""
 
+import os
 import pytest
 from moi import RawClient, ErrNilRequest
 from tests.test_helpers import (

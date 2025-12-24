@@ -54,6 +54,7 @@ sdk = SDKClient(raw)
 | `preview_table` | 预览表数据，限制返回行数。 | `raw.preview_table({"id": 301, "lines": 10})` |
 | `load_table` | 触发数据载入任务，需指定文件/表参数。 | `raw.load_table({"id": 301, "file_option": {...}, "table_option": {...}})` |
 | `get_table_download_link` | 获取表数据的下载链接。 | `raw.get_table_download_link({"id": 301})` |
+| `download_table_data` | 下载表数据为 CSV 流。 | `stream = raw.download_table_data({"id": 301}); data = stream.read(); stream.close()` |
 | `truncate_table` | 清空表数据但保留表结构。 | `raw.truncate_table({"id": 301})` |
 | `delete_table` | 删除表及其数据。 | `raw.delete_table({"id": 301})` |
 | `get_table_full_path` | 获取表对应的目录/数据库路径。 | `raw.get_table_full_path({"table_id_list": [301]})` |

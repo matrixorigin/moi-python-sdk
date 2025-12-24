@@ -47,6 +47,7 @@ sdk = SDKClient(raw)
 | `preview_table` | Sample rows. | `raw.preview_table({"id": 301, "lines": 10})` |
 | `load_table` | Trigger load task. | `raw.load_table({"id": 301, "file_option": {...}, "table_option": {...}})` |
 | `get_table_download_link` | Signed download URL. | `raw.get_table_download_link({"id": 301})` |
+| `download_table_data` | Download table data as CSV stream. | `stream = raw.download_table_data({"id": 301}); data = stream.read(); stream.close()` |
 | `truncate_table` | Delete all rows. | `raw.truncate_table({"id": 301})` |
 | `delete_table` | Drop table. | `raw.delete_table({"id": 301})` |
 | `get_table_full_path` | Resolve catalog/DB path. | `raw.get_table_full_path({"table_id_list": [301]})` |

@@ -511,6 +511,84 @@ class RawClient:
             raise ErrNilRequest("get_table_download_link requires a request payload")
         return self._request_json("POST", "/catalog/table/download", request, *opts)
 
+    def download_table_data(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> "FileStream":
+        """
+        Download table data as a CSV file stream.
+        
+        Returns a FileStream that must be closed by the caller. The stream contains
+        the CSV content that can be read directly.
+        
+        This method uses a client with no timeout to allow downloading large files.
+        The download can still be cancelled using the provided context.
+        
+        Args:
+            request: Dict with table ID:
+                - id: Table ID (required)
+            *opts: Optional call configuration options
+        
+        Returns:
+            FileStream object that must be closed by the caller
+        
+        Example:
+            stream = client.download_table_data({"id": 1})
+            try:
+                data = stream.read()
+                print(f"Downloaded {len(data)} bytes")
+            finally:
+                stream.close()
+        """
+        if request is None:
+            raise ErrNilRequest("download_table_data requires a request payload")
+        
+        table_id = request.get("id")
+        if table_id is None:
+            raise ValueError("id is required in request")
+        
+        # Build call options
+        call_opts = CallOptions()
+        for opt in opts:
+            if opt is not None:
+                opt(call_opts)
+        
+        # Build URL
+        path = "/catalog/table/download_data"
+        url = self._build_url(path, call_opts.query_params)
+        
+        # Build headers
+        headers = self._build_headers(call_opts, "application/json")
+        
+        # Serialize body
+        payload = json.dumps({"id": table_id}, default=str)
+        
+        # Use HTTP client with no timeout for downloading large files
+        # The download can still be cancelled via context if needed
+        # Temporarily save original timeout
+        original_timeout = self._timeout
+        try:
+            # Set timeout to None for large file downloads
+            self._timeout = None
+            
+            # Make POST request with stream=True
+            response = self._http_client.request(
+                method="POST",
+                url=url,
+                headers=headers,
+                data=payload,
+                timeout=None,  # No timeout - allows downloading large files
+                stream=True
+            )
+        finally:
+            # Restore original timeout
+            self._timeout = original_timeout
+        
+        # Check for HTTP errors
+        if not (200 <= response.status_code < 300):
+            body = response.content
+            response.close()
+            raise HTTPError(response.status_code, body)
+        
+        return FileStream(response)
+
     def truncate_table(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         if request is None:
             raise ErrNilRequest("truncate_table requires a request payload")

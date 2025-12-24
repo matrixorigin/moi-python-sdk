@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Iterator, Optional
 import json
+import os
 import requests
 
 from .models import DataAnalysisStreamEvent
@@ -29,6 +30,45 @@ class FileStream:
     def close(self) -> None:
         """Close the underlying HTTP response."""
         self._response.close()
+
+    def write_to_file(self, file_path: str) -> int:
+        """
+        Write the stream content to a file at the specified path.
+        
+        The method creates the file and any necessary parent directories.
+        It returns the number of bytes written.
+        
+        Args:
+            file_path: Path to the output file
+        
+        Returns:
+            Number of bytes written
+        
+        Example:
+            stream = client.download_table_data({"id": 1})
+            try:
+                written = stream.write_to_file("/path/to/output.csv")
+                print(f"Wrote {written} bytes to file")
+            finally:
+                stream.close()
+        """
+        if self._response is None or self.body is None:
+            raise IOError("Stream is closed or invalid")
+        
+        # Create parent directories if they don't exist
+        dir_path = os.path.dirname(file_path)
+        if dir_path and dir_path != "":
+            os.makedirs(dir_path, mode=0o755, exist_ok=True)
+        
+        # Write the stream content to the file
+        written = 0
+        with open(file_path, 'wb') as f:
+            for chunk in self._response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                    written += len(chunk)
+        
+        return written
 
     def __enter__(self) -> "FileStream":
         return self
