@@ -515,8 +515,9 @@ class SDKClient:
         with the following nodes:
         - RootNode: Reads files from the source volume
         - DocumentParseNode: Parses various document formats
-        - ChunkNode: Splits documents into chunks
-        - EmbedNode: Generates embeddings for document chunks
+        - CleanerNodeV2: Cleans parsed documents
+        - ChunkNodeV2: Splits documents into chunks
+        - EmbeddingNodeV2: Generates embeddings for document chunks
         - WriteNode: Writes processed results to the target volume
         
         The workflow is configured to trigger automatically when files are loaded into the source volume
@@ -582,13 +583,18 @@ class SDKClient:
                         "init_parameters": {},
                     },
                     {
+                        "id": "CleanerNode_3",
+                        "type": "CleanerNodeV2",
+                        "init_parameters": {},
+                    },
+                    {
                         "id": "ChunkNode_4",
-                        "type": "ChunkNode",
+                        "type": "ChunkNodeV2",
                         "init_parameters": {},
                     },
                     {
                         "id": "EmbedNode_5",
-                        "type": "EmbedNode",
+                        "type": "EmbeddingNodeV2",
                         "init_parameters": {},
                     },
                     {
@@ -604,6 +610,10 @@ class SDKClient:
                     },
                     {
                         "sender": "DocumentParseNode_2",
+                        "receiver": "CleanerNode_3",
+                    },
+                    {
+                        "sender": "CleanerNode_3",
                         "receiver": "ChunkNode_4",
                     },
                     {
