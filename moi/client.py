@@ -3,7 +3,7 @@
 import json
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Optional, Any, Dict, Iterable, Tuple, IO
+from typing import Optional, Any, Dict, Iterable, Tuple, IO, List
 from urllib.parse import urlparse, urljoin
 import requests
 
@@ -487,6 +487,13 @@ class RawClient:
         if request is None:
             raise ErrNilRequest("get_table requires a request payload")
         return self._request_json("POST", "/catalog/table/info", request, *opts)
+
+    def get_multi_table(self, request: Optional[List[Dict[str, Any]]], *opts: CallOption) -> Any:
+        if request is None:
+            raise ErrNilRequest("get_multi_table requires a request payload")
+        request = {"table_list": request}
+        resp = self._request_json("POST", "/catalog/table/multi_info", request, *opts)
+        return resp["info_map"]
 
     def get_table_overview(self, *opts: CallOption) -> Any:
         return self._request_json("POST", "/catalog/table/overview", {}, *opts)
