@@ -20,7 +20,7 @@ class CallOptions:
     headers: Dict[str, str] = field(default_factory=dict)
     query_params: Dict[str, Any] = field(default_factory=dict)
     request_id: Optional[str] = None
-    stream_buffer_size: int = 0  # Buffer size for stream scanner (in bytes), 0 means use default
+    stream_buffer_size: int = 0  # Initial buffer size for stream reader (in bytes), 0 means use default (4KB)
 
 
 class ClientOption:
@@ -129,22 +129,22 @@ def with_query(query_params: Dict[str, Any]) -> CallOption:
 
 def with_stream_buffer_size(size: int) -> CallOption:
     """
-    Set the buffer size for stream scanner to handle large tokens.
+    Set the initial buffer size for stream reader.
     
-    The default buffer size for Python's iter_lines is effectively unlimited,
-    but this option is provided for API consistency with the Go SDK. If your
-    SSE stream contains very large data lines, you can use this option to
-    control chunk size for better memory management.
+    The buffer will dynamically grow as needed to handle lines of arbitrary length,
+    so this option only sets the initial buffer size for better performance.
+    If not set, the default initial buffer size is 4KB.
     
-    The size is specified in bytes. A common value is 1MB (1024 * 1024) or larger.
+    The size is specified in bytes. A larger initial buffer can improve performance
+    for streams with consistently large lines, but is not required for correctness.
     
     Args:
-        size: Buffer size in bytes. Must be > 0 to take effect.
+        size: Initial buffer size in bytes. Must be > 0 to take effect.
     
     Example:
         stream = client.analyze_data_stream(
             {"question": "..."},
-            with_stream_buffer_size(1024 * 1024)  # 1MB buffer
+            with_stream_buffer_size(64 * 1024)  # 64KB initial buffer
         )
     """
     class _Option(CallOption):

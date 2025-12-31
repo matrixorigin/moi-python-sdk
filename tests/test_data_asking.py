@@ -297,7 +297,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is not None
@@ -333,7 +333,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         # Read first event
         event = stream.read_event()
@@ -375,7 +375,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is not None
@@ -403,7 +403,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse()
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is None
@@ -432,7 +432,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)  # Use default
+        stream = DataAnalysisStream(response, initial_buffer_size=0)  # Use default
         
         event = stream.read_event()
         assert event is not None
@@ -443,6 +443,7 @@ class TestDataAnalysisStream_ReadEvent:
 
     def test_read_event_custom_buffer_size(self):
         """Test custom buffer size handling."""
+        # Create data larger than initial buffer - should automatically grow
         large_data = "y" * (200 * 1024)  # 200KB
         json_data = json.dumps({"data": large_data})
         sse_data = f"event: large\ndata: {json_data}\n\n"
@@ -462,10 +463,10 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=512 * 1024)  # 512KB custom buffer
+        stream = DataAnalysisStream(response, initial_buffer_size=512 * 1024)  # 512KB initial buffer (will grow as needed)
         
         event = stream.read_event()
-        assert event is not None
+        assert event is not None, "Should handle large data with dynamic buffer growth"
         assert event.type == "large"
         assert large_data in event.raw_data.decode('utf-8')
         
@@ -490,7 +491,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is not None
@@ -518,7 +519,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is not None
@@ -530,6 +531,7 @@ class TestDataAnalysisStream_ReadEvent:
 
     def test_with_stream_buffer_size_option(self):
         """Test WithStreamBufferSize option."""
+        # The buffer will automatically grow to handle data larger than initial size
         large_data = "a" * (150 * 1024)  # 150KB
         json_data = json.dumps({"data": large_data})
         sse_data = f"event: test\ndata: {json_data}\n\n"
@@ -549,10 +551,10 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=256 * 1024)  # 256KB
+        stream = DataAnalysisStream(response, initial_buffer_size=256 * 1024)  # 256KB initial buffer (set via WithStreamBufferSize, will grow as needed)
         
         event = stream.read_event()
-        assert event is not None
+        assert event is not None, "Should handle data with dynamic buffer growth from option"
         assert event.type == "test"
         
         stream.close()
@@ -576,7 +578,7 @@ class TestDataAnalysisStream_ReadEvent:
                 pass
         
         response = MockResponse(sse_data)
-        stream = DataAnalysisStream(response, max_buffer_size=0)
+        stream = DataAnalysisStream(response, initial_buffer_size=0)
         
         event = stream.read_event()
         assert event is not None

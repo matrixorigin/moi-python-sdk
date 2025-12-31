@@ -111,22 +111,25 @@ class DataAnalysisStream:
             stream.close()
     """
 
-    def __init__(self, response: requests.Response, max_buffer_size: int = 0):
+    def __init__(self, response: requests.Response, initial_buffer_size: int = 0):
         """
         Initialize a DataAnalysisStream.
         
         Args:
             response: The HTTP response object
-            max_buffer_size: Maximum buffer size for reading lines (in bytes).
-                           Default is 0, which means use default chunk size.
-                           This is provided for API consistency with Go SDK.
+            initial_buffer_size: Initial buffer size for reading lines (in bytes).
+                                Default is 0, which means use default chunk size (512 bytes).
+                                The buffer will dynamically grow as needed to handle lines of
+                                arbitrary length, so this option only sets the initial buffer
+                                size for better performance. This is provided for API consistency
+                                with Go SDK.
         """
         self._response = response
         self.body = response.raw
         self.headers = response.headers
         self.status_code = response.status_code
         self._scanner = None
-        self._max_buffer_size = max_buffer_size
+        self._initial_buffer_size = initial_buffer_size
 
     def close(self) -> None:
         """Close the underlying HTTP response."""
@@ -149,12 +152,17 @@ class DataAnalysisStream:
         """
         if self._scanner is None:
             # Initialize scanner to read line by line
-            # Set chunk_size based on max_buffer_size if specified
-            # Default chunk_size is 512 bytes, but we can increase it for large data
+            # Set chunk_size based on initial_buffer_size if specified
+            # Default chunk_size is 512 bytes. iter_lines will dynamically grow to handle
+            # lines of arbitrary length, so this only sets the initial chunk size.
             chunk_size = 512
-            if self._max_buffer_size > 0:
-                # Use a reasonable chunk size based on buffer size (but not too large)
-                chunk_size = min(self._max_buffer_size, 8192)  # Cap at 8KB per chunk
+            if self._initial_buffer_size > 0:
+                # Use a reasonable chunk size based on initial buffer size
+                # Default to 4KB if not specified, but allow custom sizes
+                chunk_size = max(512, min(self._initial_buffer_size, 8192))  # Between 512B and 8KB
+            else:
+                # Default initial buffer size: 4KB (4096 bytes)
+                chunk_size = 4096
             self._scanner = iter(self._response.iter_lines(decode_unicode=True, chunk_size=chunk_size))
 
         event = DataAnalysisStreamEvent()
@@ -181,7 +189,10 @@ class DataAnalysisStream:
                                 event.step_name = parsed.get("step_name") or event.step_name
                         except json.JSONDecodeError:
                             # If JSON parsing fails, return raw data (event already has raw_data set)
-                            pass
+                            # But still set event.type if event_type was specified
+                            if event_type:
+                                event.type = event_type
+                            return event
                         if event_type:
                             event.type = event_type
                         return event
@@ -210,7 +221,10 @@ class DataAnalysisStream:
                         event.step_name = parsed.get("step_name") or event.step_name
                 except json.JSONDecodeError:
                     # If JSON parsing fails, return raw data (event already has raw_data set)
-                    pass
+                    # But still set event.type if event_type was specified
+                    if event_type:
+                        event.type = event_type
+                    return event
                 if event_type:
                     event.type = event_type
                 return event

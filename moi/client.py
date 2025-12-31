@@ -1916,7 +1916,7 @@ class RawClient:
             response.close()
             raise ValueError(f"unexpected content type: {content_type}, body: {body.decode('utf-8', errors='ignore')}")
         
-        return DataAnalysisStream(response, max_buffer_size=call_opts.stream_buffer_size)
+        return DataAnalysisStream(response, initial_buffer_size=call_opts.stream_buffer_size)
 
     def cancel_analyze(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         """
