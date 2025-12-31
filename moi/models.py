@@ -132,8 +132,8 @@ class AuthorityCodeAndRule:
 
 @dataclass
 class TableRowColExpression:
-    operator: str
-    expression: str
+    operator: str  # = != like > >= < <= regexp_like
+    expression: List[str]  # Changed from str to List[str]
     match_type: str = ""  # c,i,m,n,u
 
 
