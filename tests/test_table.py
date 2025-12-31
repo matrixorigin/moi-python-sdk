@@ -43,6 +43,16 @@ class TestTableLiveFlow:
                 info_resp = client.get_table({"id": table_id})
                 assert info_resp is not None
                 assert info_resp["name"] == table_name
+
+                # Get multi table
+                multi_info_resp = client.get_multi_table([{"id": table_id}])
+                assert multi_info_resp is not None
+                assert isinstance(multi_info_resp, dict)
+                # Access table info using the correct key format
+                key = f"{database_id} {table_name}"
+                assert key in multi_info_resp
+                table_info = multi_info_resp[key]
+                assert table_info["name"] == table_name
                 
                 # Check table exists
                 exists = client.check_table_exists({
@@ -108,6 +118,13 @@ class TestTableNilRequestErrors:
         client = RawClient("http://example.com", "test-key")
         with pytest.raises(ErrNilRequest):
             client.get_table(None)
+
+    
+    def test_get_multi_table_nil_request(self):
+        """Test GetTable with nil request."""
+        client = RawClient("http://example.com", "test-key")
+        with pytest.raises(ErrNilRequest):
+            client.get_multi_table(None)
 
     def test_check_table_exists_nil_request(self):
         """Test CheckTableExists with nil request."""
@@ -198,6 +215,13 @@ class TestTableIDNotExists:
         # Try to get non-existent table
         with pytest.raises(Exception):
             client.get_table({"id": non_existent_id})
+
+        # Try to get non-existent table (by get_multi_table)
+        try:
+            resp = client.get_multi_table([{"id": non_existent_id}])
+            assert resp is not None
+        except Exception:
+            pass  # Expected error
         
         # Try to preview non-existent table - may not error if service allows empty preview
         try:
@@ -239,6 +263,14 @@ class TestTableWithDefaultValues:
                 assert info_resp is not None
                 assert info_resp["name"] == table_name
                 assert len(info_resp.get("columns", [])) == 3
+
+                # Verify table was created successfully(by get multi info)
+                info_resp = client.get_multi_table([{"id": table_id}])
+                assert info_resp is not None
+                key = f"{database_id} {table_name}"
+                table_info = info_resp[key]
+                assert table_info["name"] == table_name
+                assert len(table_info.get("columns", [])) == 3
             finally:
                 try:
                     client.delete_table({"id": table_id})
