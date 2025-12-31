@@ -1,8 +1,13 @@
 """Tests for Data Analysis (Data Asking) APIs."""
 
+import json
+import io
 import pytest
 from moi import RawClient, ErrNilRequest
+from moi.options import with_stream_buffer_size
+from moi.stream import DataAnalysisStream
 from tests.test_helpers import get_test_client
+import requests
 
 
 class TestAnalyzeDataStream:
@@ -266,4 +271,350 @@ class TestCancelAnalyze:
                   f"Status: {cancel_resp.get('status')}, UserID: {cancel_resp.get('user_id')}")
         finally:
             stream.close()
+
+
+class TestDataAnalysisStream_ReadEvent:
+    """Test DataAnalysisStream.read_event with various scenarios."""
+
+    def test_read_event_basic(self):
+        """Test basic SSE event reading."""
+        # Create a simple SSE stream
+        sse_data = "event: classification\ndata: {\"type\":\"classification\",\"data\":{\"category\":\"query\"}}\n\n"
+        
+        # Create a mock response
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "classification"
+        assert event.raw_data is not None
+        
+        # Should return None for next read (EOF)
+        event = stream.read_event()
+        assert event is None
+        
+        stream.close()
+
+    def test_read_event_multiple_events(self):
+        """Test reading multiple events."""
+        sse_data = (
+            "event: init\ndata: {\"step_type\":\"init\",\"data\":{\"request_id\":\"req-123\"}}\n\n"
+            + "event: classification\ndata: {\"type\":\"classification\"}\n\n"
+            + "event: complete\ndata: {\"type\":\"complete\"}\n\n"
+        )
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        # Read first event
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "init"
+        
+        # Read second event
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "classification"
+        
+        # Read third event
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "complete"
+        
+        # Should return None (EOF)
+        event = stream.read_event()
+        assert event is None
+        
+        stream.close()
+
+    def test_read_event_multi_line_data(self):
+        """Test multi-line data handling."""
+        sse_data = "event: test\ndata: {\"key1\":\"value1\"}\ndata: {\"key2\":\"value2\"}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "test"
+        # Multi-line data should be joined
+        raw_data_str = event.raw_data.decode('utf-8') if event.raw_data else ""
+        assert "key1" in raw_data_str
+        assert "key2" in raw_data_str
+        
+        stream.close()
+
+    def test_read_event_empty_stream(self):
+        """Test empty stream handling."""
+        class MockResponse:
+            def __init__(self):
+                self.content = b""
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(b"")
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                return iter([])
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse()
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is None
+        
+        stream.close()
+
+    def test_read_event_default_buffer_size(self):
+        """Test default buffer size handling."""
+        # Create data larger than typical chunk size
+        large_data = "x" * (100 * 1024)  # 100KB
+        json_data = json.dumps({"data": large_data})
+        sse_data = f"event: large\ndata: {json_data}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)  # Use default
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "large"
+        assert large_data in event.raw_data.decode('utf-8')
+        
+        stream.close()
+
+    def test_read_event_custom_buffer_size(self):
+        """Test custom buffer size handling."""
+        large_data = "y" * (200 * 1024)  # 200KB
+        json_data = json.dumps({"data": large_data})
+        sse_data = f"event: large\ndata: {json_data}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=512 * 1024)  # 512KB custom buffer
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "large"
+        assert large_data in event.raw_data.decode('utf-8')
+        
+        stream.close()
+
+    def test_read_event_invalid_json(self):
+        """Test handling of invalid JSON."""
+        sse_data = "event: test\ndata: {invalid json}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "test"
+        assert "{invalid json}" in event.raw_data.decode('utf-8')
+        
+        stream.close()
+
+    def test_read_event_no_event_type(self):
+        """Test SSE without event type."""
+        sse_data = "data: {\"step_type\":\"init\",\"data\":{\"request_id\":\"req-123\"}}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is not None
+        # Type should be empty if not specified
+        assert event.type == ""
+        assert event.raw_data is not None
+        
+        stream.close()
+
+    def test_with_stream_buffer_size_option(self):
+        """Test WithStreamBufferSize option."""
+        large_data = "a" * (150 * 1024)  # 150KB
+        json_data = json.dumps({"data": large_data})
+        sse_data = f"event: test\ndata: {json_data}\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=256 * 1024)  # 256KB
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "test"
+        
+        stream.close()
+
+    def test_read_event_empty_lines(self):
+        """Test handling of multiple empty lines."""
+        sse_data = "\n\nevent: test\ndata: {\"key\":\"value\"}\n\n\n\n"
+        
+        class MockResponse:
+            def __init__(self, data):
+                self.content = data.encode('utf-8')
+                self.headers = {}
+                self.status_code = 200
+                self.raw = io.BytesIO(data.encode('utf-8'))
+                
+            def iter_lines(self, decode_unicode=True, chunk_size=512):
+                for line in data.split('\n'):
+                    yield line
+                    
+            def close(self):
+                pass
+        
+        response = MockResponse(sse_data)
+        stream = DataAnalysisStream(response, max_buffer_size=0)
+        
+        event = stream.read_event()
+        assert event is not None
+        assert event.type == "test"
+        
+        # Next read should be None (EOF)
+        event = stream.read_event()
+        assert event is None
+        
+        stream.close()
+
+
+class TestWithStreamBufferSize_Option:
+    """Test WithStreamBufferSize option function."""
+
+    def test_with_stream_buffer_size_option(self):
+        """Test that WithStreamBufferSize properly sets the buffer size."""
+        from moi.options import CallOptions
+        
+        # Test with positive value
+        opts = CallOptions()
+        opt = with_stream_buffer_size(2 * 1024 * 1024)  # 2MB
+        opt(opts)
+        assert opts.stream_buffer_size == 2 * 1024 * 1024
+        
+        # Test with zero value (should not change default)
+        opts = CallOptions()
+        opt = with_stream_buffer_size(0)
+        opt(opts)
+        assert opts.stream_buffer_size == 0
+        
+        # Test with negative value (should not change default)
+        opts = CallOptions()
+        opt = with_stream_buffer_size(-1)
+        opt(opts)
+        assert opts.stream_buffer_size == 0
+        
+        # Test default value
+        opts = CallOptions()
+        assert opts.stream_buffer_size == 0
 

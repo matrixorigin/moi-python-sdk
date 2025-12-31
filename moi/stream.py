@@ -111,12 +111,22 @@ class DataAnalysisStream:
             stream.close()
     """
 
-    def __init__(self, response: requests.Response):
+    def __init__(self, response: requests.Response, max_buffer_size: int = 0):
+        """
+        Initialize a DataAnalysisStream.
+        
+        Args:
+            response: The HTTP response object
+            max_buffer_size: Maximum buffer size for reading lines (in bytes).
+                           Default is 0, which means use default chunk size.
+                           This is provided for API consistency with Go SDK.
+        """
         self._response = response
         self.body = response.raw
         self.headers = response.headers
         self.status_code = response.status_code
         self._scanner = None
+        self._max_buffer_size = max_buffer_size
 
     def close(self) -> None:
         """Close the underlying HTTP response."""
@@ -139,7 +149,13 @@ class DataAnalysisStream:
         """
         if self._scanner is None:
             # Initialize scanner to read line by line
-            self._scanner = iter(self._response.iter_lines(decode_unicode=True))
+            # Set chunk_size based on max_buffer_size if specified
+            # Default chunk_size is 512 bytes, but we can increase it for large data
+            chunk_size = 512
+            if self._max_buffer_size > 0:
+                # Use a reasonable chunk size based on buffer size (but not too large)
+                chunk_size = min(self._max_buffer_size, 8192)  # Cap at 8KB per chunk
+            self._scanner = iter(self._response.iter_lines(decode_unicode=True, chunk_size=chunk_size))
 
         event = DataAnalysisStreamEvent()
         data_lines = []
