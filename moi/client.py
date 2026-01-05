@@ -504,9 +504,61 @@ class RawClient:
         return self._request_json("POST", "/catalog/table/exist", request, *opts)
 
     def preview_table(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        """
+        Preview table data without loading it into memory.
+        
+        This method internally uses get_table_data to fetch the data.
+        
+        Args:
+            request: Dict with table ID and optional lines:
+                - id: Table ID (required)
+                - lines: Number of rows to preview (optional, default 10)
+            *opts: Optional call configuration options
+        
+        Returns:
+            Dict with columns and data:
+                - columns: List of column definitions
+                - data: List of data rows (limited to requested lines)
+        """
         if request is None:
             raise ErrNilRequest("preview_table requires a request payload")
-        return self._request_json("POST", "/catalog/table/preview", request, *opts)
+        
+        table_id = request.get("id")
+        if table_id is None:
+            raise ValueError("id is required in request")
+        
+        # Convert preview request to get_table_data request
+        lines = request.get("lines", 10)
+        if lines <= 0:
+            lines = 10  # Default preview size
+        
+        # Call get_table_data internally
+        data_req = {
+            "id": table_id,
+            "page": 1,
+            "page_size": lines,
+        }
+        # database_id is optional for get_table_data when only table_id is provided
+        if "database_id" in request:
+            data_req["database_id"] = request["database_id"]
+        
+        data_resp = self.get_table_data(data_req, *opts)
+        
+        # Convert get_table_data response to preview response
+        # Limit data rows to the requested lines
+        preview_data = data_resp.get("data", [])
+        if len(preview_data) > lines:
+            preview_data = preview_data[:lines]
+        
+        return {
+            "columns": data_resp.get("columns", []),
+            "data": preview_data,
+        }
+
+    def get_table_data(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
+        if request is None:
+            raise ErrNilRequest("get_table_data requires a request payload")
+        return self._request_json("POST", "/catalog/table/data", request, *opts)
 
     def load_table(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         if request is None:

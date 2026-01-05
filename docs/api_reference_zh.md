@@ -52,6 +52,7 @@ sdk = SDKClient(raw)
 | `get_table_overview` | 获取所有表的概览信息。 | `raw.get_table_overview()` |
 | `check_table_exists` | 判断某数据库下表名是否存在。 | `raw.check_table_exists({"database_id": 201, "name": "orders"})` |
 | `preview_table` | 预览表数据，限制返回行数。 | `raw.preview_table({"id": 301, "lines": 10})` |
+| `get_table_data` | 获取表数据，支持分页。 | `raw.get_table_data({"id": 301, "database_id": 201, "page": 1, "page_size": 100})` |
 | `load_table` | 触发数据载入任务，需指定文件/表参数。 | `raw.load_table({"id": 301, "file_option": {...}, "table_option": {...}})` |
 | `get_table_download_link` | 获取表数据的下载链接。 | `raw.get_table_download_link({"id": 301})` |
 | `download_table_data` | 下载表数据为 CSV 流。 | `stream = raw.download_table_data({"id": 301}); data = stream.read(); stream.close()` |

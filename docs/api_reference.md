@@ -45,6 +45,7 @@ sdk = SDKClient(raw)
 | `get_table_overview` | Lightweight table list. | `raw.get_table_overview()` |
 | `check_table_exists` | Boolean check by DB/name. | `raw.check_table_exists({"database_id": 201, "name": "orders"})` |
 | `preview_table` | Sample rows. | `raw.preview_table({"id": 301, "lines": 10})` |
+| `get_table_data` | Retrieve table data with pagination. | `raw.get_table_data({"id": 301, "database_id": 201, "page": 1, "page_size": 100})` |
 | `load_table` | Trigger load task. | `raw.load_table({"id": 301, "file_option": {...}, "table_option": {...}})` |
 | `get_table_download_link` | Signed download URL. | `raw.get_table_download_link({"id": 301})` |
 | `download_table_data` | Download table data as CSV stream. | `stream = raw.download_table_data({"id": 301}); data = stream.read(); stream.close()` |

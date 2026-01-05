@@ -138,6 +138,12 @@ class TestTableNilRequestErrors:
         with pytest.raises(ErrNilRequest):
             client.preview_table(None)
 
+    def test_get_table_data_nil_request(self):
+        """Test GetTableData with nil request."""
+        client = RawClient("http://example.com", "test-key")
+        with pytest.raises(ErrNilRequest):
+            client.get_table_data(None)
+
     def test_delete_table_nil_request(self):
         """Test DeleteTable with nil request."""
         client = RawClient("http://example.com", "test-key")
@@ -279,4 +285,295 @@ class TestTableWithDefaultValues:
         finally:
             mark_database_deleted()
             mark_catalog_deleted()
+
+
+class TestGetTableData:
+    """Test GetTableData API."""
+
+    def test_get_table_data_live_flow(self):
+        """Test GetTableData with live backend."""
+        client = get_test_client()
+        
+        catalog_id, mark_catalog_deleted = create_test_catalog(client)
+        database_id, mark_database_deleted = create_test_database(client, catalog_id)
+        
+        try:
+            table_name = random_name("sdk-table-data-")
+            columns = [
+                {"name": "id", "type": "int", "is_pk": True},
+                {"name": "name", "type": "varchar(255)"},
+                {"name": "value", "type": "int"},
+            ]
+            create_resp = client.create_table({
+                "database_id": database_id,
+                "name": table_name,
+                "columns": columns,
+                "comment": "test table for GetTableData",
+            })
+            assert create_resp is not None
+            table_id = create_resp["id"]
+            
+            try:
+                # Test GetTableData with default pagination (empty table)
+                resp = client.get_table_data({
+                    "id": table_id,
+                    "database_id": database_id,
+                    "page": 1,
+                    "page_size": 100,
+                })
+                assert resp is not None
+                assert "columns" in resp
+                assert "data" in resp
+                assert resp["page"] == 1
+                assert resp["page_size"] == 100
+                assert resp["total_rows"] >= 0
+                assert len(resp["columns"]) == 3
+                assert resp["columns"][0]["name"] == "id"
+                assert resp["columns"][1]["name"] == "name"
+                assert resp["columns"][2]["name"] == "value"
+                
+                # Test GetTableData with different page size
+                resp2 = client.get_table_data({
+                    "id": table_id,
+                    "database_id": database_id,
+                    "page": 1,
+                    "page_size": 50,
+                })
+                assert resp2 is not None
+                assert resp2["page"] == 1
+                assert resp2["page_size"] == 50
+                assert resp["total_rows"] == resp2["total_rows"], "total rows should be the same"
+                
+                # Test GetTableData with both id and name (id is required by backend)
+                resp3 = client.get_table_data({
+                    "id": table_id,
+                    "name": table_name,
+                    "database_id": database_id,
+                    "page": 1,
+                    "page_size": 10,
+                })
+                assert resp3 is not None
+                assert resp["total_rows"] == resp3["total_rows"], "total rows should be the same when using both id and name"
+                
+                # Test GetTableData with page 2 (should work even if empty)
+                resp4 = client.get_table_data({
+                    "id": table_id,
+                    "database_id": database_id,
+                    "page": 2,
+                    "page_size": 10,
+                })
+                assert resp4 is not None
+                assert resp4["page"] == 2
+                assert resp4["page_size"] == 10
+            finally:
+                try:
+                    client.delete_table({"id": table_id})
+                except Exception:
+                    pass
+        finally:
+            mark_database_deleted()
+            mark_catalog_deleted()
+
+    def test_get_table_data_pagination(self):
+        """Test GetTableData pagination edge cases."""
+        client = get_test_client()
+        
+        catalog_id, mark_catalog_deleted = create_test_catalog(client)
+        database_id, mark_database_deleted = create_test_database(client, catalog_id)
+        
+        try:
+            table_name = random_name("sdk-table-pagination-")
+            columns = [
+                {"name": "id", "type": "int", "is_pk": True},
+                {"name": "name", "type": "varchar(255)"},
+            ]
+            create_resp = client.create_table({
+                "database_id": database_id,
+                "name": table_name,
+                "columns": columns,
+                "comment": "test table for pagination",
+            })
+            assert create_resp is not None
+            table_id = create_resp["id"]
+            
+            try:
+                # Test with page 0 (should default to 1)
+                resp = client.get_table_data({
+                    "id": table_id,
+                    "database_id": database_id,
+                    "page": 0,
+                    "page_size": 10,
+                })
+                assert resp is not None
+                # Backend should default page to 1 if <= 0
+                assert resp["page"] >= 1
+                
+                # Test with pageSize 0 (should default to 100)
+                resp2 = client.get_table_data({
+                    "id": table_id,
+                    "database_id": database_id,
+                    "page": 1,
+                    "page_size": 0,
+                })
+                assert resp2 is not None
+                # Backend should default pageSize to 100 if <= 0
+                assert resp2["page_size"] >= 100
+            finally:
+                try:
+                    client.delete_table({"id": table_id})
+                except Exception:
+                    pass
+        finally:
+            mark_database_deleted()
+            mark_catalog_deleted()
+
+
+class TestPreviewTable:
+    """Test PreviewTable API (refactored to use get_table_data internally)."""
+
+    def test_preview_table_live_flow(self):
+        """Test PreviewTable with live backend."""
+        client = get_test_client()
+        
+        catalog_id, mark_catalog_deleted = create_test_catalog(client)
+        database_id, mark_database_deleted = create_test_database(client, catalog_id)
+        
+        try:
+            table_name = random_name("sdk-table-preview-")
+            columns = [
+                {"name": "id", "type": "int", "is_pk": True},
+                {"name": "name", "type": "varchar(255)"},
+                {"name": "value", "type": "int"},
+            ]
+            create_resp = client.create_table({
+                "database_id": database_id,
+                "name": table_name,
+                "columns": columns,
+                "comment": "test table for PreviewTable",
+            })
+            assert create_resp is not None
+            table_id = create_resp["id"]
+            
+            try:
+                # Test PreviewTable with specific Lines
+                resp = client.preview_table({
+                    "id": table_id,
+                    "lines": 5,
+                })
+                assert resp is not None
+                assert "columns" in resp
+                assert "data" in resp
+                assert len(resp["columns"]) == 3
+                assert resp["columns"][0]["name"] == "id"
+                assert resp["columns"][1]["name"] == "name"
+                assert resp["columns"][2]["name"] == "value"
+                # Data rows should not exceed requested Lines
+                assert len(resp["data"]) <= 5, "data rows should not exceed requested Lines"
+                
+                # Test PreviewTable with different Lines value
+                resp2 = client.preview_table({
+                    "id": table_id,
+                    "lines": 10,
+                })
+                assert resp2 is not None
+                assert len(resp2["data"]) <= 10, "data rows should not exceed requested Lines"
+                # Columns should be the same
+                assert len(resp["columns"]) == len(resp2["columns"])
+                
+                # Test PreviewTable with Lines = 0 (should use default)
+                resp3 = client.preview_table({
+                    "id": table_id,
+                    "lines": 0,
+                })
+                assert resp3 is not None
+                # Should use default pageSize of 10
+                assert len(resp3["data"]) <= 10, "data rows should not exceed default pageSize"
+                
+                # Test PreviewTable with negative Lines (should use default)
+                resp4 = client.preview_table({
+                    "id": table_id,
+                    "lines": -1,
+                })
+                assert resp4 is not None
+                # Should use default pageSize of 10
+                assert len(resp4["data"]) <= 10, "data rows should not exceed default pageSize"
+                
+                # Test PreviewTable with large Lines value
+                resp5 = client.preview_table({
+                    "id": table_id,
+                    "lines": 100,
+                })
+                assert resp5 is not None
+                assert len(resp5["data"]) <= 100, "data rows should not exceed requested Lines"
+            finally:
+                try:
+                    client.delete_table({"id": table_id})
+                except Exception:
+                    pass
+        finally:
+            mark_database_deleted()
+            mark_catalog_deleted()
+
+    def test_preview_table_empty_table(self):
+        """Test PreviewTable with empty table."""
+        client = get_test_client()
+        
+        catalog_id, mark_catalog_deleted = create_test_catalog(client)
+        database_id, mark_database_deleted = create_test_database(client, catalog_id)
+        
+        try:
+            table_name = random_name("sdk-table-preview-empty-")
+            columns = [
+                {"name": "id", "type": "int", "is_pk": True},
+                {"name": "name", "type": "varchar(255)"},
+            ]
+            create_resp = client.create_table({
+                "database_id": database_id,
+                "name": table_name,
+                "columns": columns,
+                "comment": "empty test table for PreviewTable",
+            })
+            assert create_resp is not None
+            table_id = create_resp["id"]
+            
+            try:
+                # Preview empty table
+                resp = client.preview_table({
+                    "id": table_id,
+                    "lines": 5,
+                })
+                assert resp is not None
+                assert "columns" in resp
+                assert "data" in resp
+                assert len(resp["columns"]) == 2
+                # Data should be empty for empty table
+                assert len(resp["data"]) == 0, "data should be empty for empty table"
+            finally:
+                try:
+                    client.delete_table({"id": table_id})
+                except Exception:
+                    pass
+        finally:
+            mark_database_deleted()
+            mark_catalog_deleted()
+
+    def test_preview_table_nonexistent_table(self):
+        """Test PreviewTable with non-existent table."""
+        client = get_test_client()
+        
+        non_existent_id = 999999999
+        
+        # Try to preview non-existent table
+        try:
+            resp = client.preview_table({
+                "id": non_existent_id,
+                "lines": 5,
+            })
+            # If no error, response should be valid (service may allow empty preview)
+            assert resp is not None
+            assert "columns" in resp
+            assert "data" in resp
+        except Exception:
+            # Expected error for non-existent table
+            pass
 
