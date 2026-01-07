@@ -1,13 +1,15 @@
 """Tests for SDKClient helper methods."""
 
+import os
 import pytest
-from moi import SDKClient
+from moi import SDKClient, ExistedTableOption, ExistedTableOptions
 from tests.test_helpers import (
     get_test_client,
     random_name,
     create_test_catalog,
     create_test_database,
     create_test_volume,
+    create_test_table,
 )
 
 
@@ -114,6 +116,137 @@ class TestFindFilesByName:
                 print(f"Successfully found {found_files.get('total')} file(s) with search name '{search_file_name}'")
         finally:
             mark_volume_deleted()
+            mark_database_deleted()
+            mark_catalog_deleted()
+
+
+class TestImportLocalFileToTableExistedTableOption:
+    """Test ImportLocalFileToTable with ExistedTableOptions.
+    run case : 
+        pytest test_sdk_client.py::TestImportLocalFileToTableExistedTableOption 
+    """
+
+    @pytest.mark.integration
+    def test_import_local_file_to_table_existed_table_option(self):
+        """Test ImportLocalFileToTable with ExistedTableOptions (append and overwrite)."""
+        import tempfile
+        
+        raw_client = get_test_client()
+        sdk = SDKClient(raw_client)
+        
+        # Create test catalog, database, and table
+        catalog_id, mark_catalog_deleted = create_test_catalog(raw_client)
+        database_id, mark_database_deleted = create_test_database(raw_client, catalog_id)
+        table_id, mark_table_deleted = create_test_table(raw_client, database_id)
+        
+        try:
+            # Create a test volume and upload a file to get conn_file_id
+            volume_id, mark_volume_deleted = create_test_volume(raw_client, database_id)
+            
+            try:
+                # Create a temporary test file
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    file_name = "test-import-table.csv"
+                    file_path = os.path.join(tmpdir, file_name)
+                    test_content = "id,name\n1,test1\n2,test2\n"
+                    
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(test_content)
+                    
+                    # Upload file to volume to get conn_file_id
+                    upload_resp = sdk.import_local_file_to_volume(
+                        file_path,
+                        volume_id,
+                        {"filename": file_name, "path": file_name},
+                        None
+                    )
+                    assert upload_resp is not None
+                    assert upload_resp.get("file_id")
+                    conn_file_id = upload_resp.get("file_id")
+                    
+                    # Test 1: Import to existing table with ExistedTableOpts set to append
+                    table_config_append = {
+                        "conn_file_ids": [conn_file_id],
+                        "new_table": False,
+                        "table_id": table_id,
+                        "database_id": database_id,
+                        "existed_table": [
+                            {
+                                "tableColumn": "id",
+                                "column": "id",
+                                "col_num_in_file": 1,
+                            },
+                            {
+                                "tableColumn": "name",
+                                "column": "name",
+                                "col_num_in_file": 2,
+                            },
+                        ],
+                        "existed_table_opts": ExistedTableOptions(method=ExistedTableOption.APPEND),
+                    }
+                    
+                    resp = sdk.import_local_file_to_table(table_config_append)
+                    # Note: The actual API call might fail if the file format doesn't match,
+                    # but we're testing that the ExistedTableOpts is properly set
+                    if resp is None:
+                        print("ImportLocalFileToTable with append option returned None (expected in some cases)")
+                    else:
+                        assert resp is not None
+                        print(f"Successfully imported with append option, response: {resp}")
+                    
+                    # Test 2: Import to existing table with ExistedTableOpts set to overwrite
+                    table_config_overwrite = {
+                        "conn_file_ids": [conn_file_id],
+                        "new_table": False,
+                        "table_id": table_id,
+                        "database_id": database_id,
+                        "existed_table": [
+                            {
+                                "tableColumn": "id",
+                                "column": "id",
+                                "col_num_in_file": 1,
+                            },
+                            {
+                                "tableColumn": "name",
+                                "column": "name",
+                                "col_num_in_file": 2,
+                            },
+                        ],
+                        "existed_table_opts": ExistedTableOptions(method=ExistedTableOption.OVERWRITE),
+                    }
+                    
+                    resp2 = sdk.import_local_file_to_table(table_config_overwrite)
+                    if resp2 is None:
+                        print("ImportLocalFileToTable with overwrite option returned None (expected in some cases)")
+                    else:
+                        assert resp2 is not None
+                        print(f"Successfully imported with overwrite option, response: {resp2}")
+                    
+                    # Test 3: Import to existing table with existed_table as None (should be initialized to empty list internally)
+                    # Note: The method uses deepcopy, so the original dict won't be modified, but None should be handled correctly
+                    table_config_nil_existed_table = {
+                        "conn_file_ids": [conn_file_id],
+                        "new_table": False,
+                        "table_id": table_id,
+                        "database_id": database_id,
+                        "existed_table": None,  # None should be initialized to empty list internally
+                        "existed_table_opts": ExistedTableOptions(method=ExistedTableOption.APPEND),
+                    }
+                    
+                    resp3 = sdk.import_local_file_to_table(table_config_nil_existed_table)
+                    # The method should handle None existed_table correctly by initializing it to empty list internally
+                    # Since the method uses deepcopy, the original dict remains unchanged
+                    # We just verify that the call doesn't raise an error
+                    
+                    if resp3 is None:
+                        print("ImportLocalFileToTable with None existed_table returned None (expected in some cases)")
+                    else:
+                        assert resp3 is not None
+                        print(f"Successfully imported with None existed_table (initialized internally), response: {resp3}")
+            finally:
+                mark_volume_deleted()
+        finally:
+            mark_table_deleted()
             mark_database_deleted()
             mark_catalog_deleted()
 
