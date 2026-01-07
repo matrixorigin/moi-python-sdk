@@ -21,6 +21,34 @@ class TablePrivInfo:
     authority_code_list: Optional[Sequence[Dict[str, Any]]] = None
 
 
+class ExistedTableOption:
+    """Constants for existing table import options."""
+    APPEND = "append"      # Append new data to the existing table
+    OVERWRITE = "overwrite"  # Overwrite the existing table with new data
+
+
+@dataclass
+class ExistedTableOptions:
+    """
+    Options for importing data into an existing table.
+    
+    This specifies how to handle data when importing into an existing table:
+    - append: Append new data to the table (default behavior)
+    - overwrite: Overwrite the table with new data
+    
+    Example:
+        opts = ExistedTableOptions(method=ExistedTableOption.APPEND)
+        table_config = {
+            "new_table": False,
+            "table_id": 123,
+            "database_id": 456,
+            "conn_file_ids": ["file-id"],
+            "existed_table_opts": opts
+        }
+    """
+    method: str = ExistedTableOption.APPEND  # "append" or "overwrite", default is "append" (empty string also means "append")
+
+
 class SDKClient:
     """High-level convenience client built on top of RawClient."""
 
@@ -111,7 +139,23 @@ class SDKClient:
         return self.raw.update_role_info(payload)
 
     def import_local_file_to_table(self, table_config: Dict[str, Any]) -> Any:
-        """Import an already uploaded local file into a table using connector upload."""
+        """
+        Import an already uploaded local file into a table using connector upload.
+        
+        ExistedTableOptions Usage:
+            from moi import ExistedTableOption, ExistedTableOptions
+            
+            # Append to existing table
+            config = {
+                "new_table": False,
+                "table_id": 123,
+                "database_id": 456,
+                "conn_file_ids": ["file-id"],
+                "existed_table": [],
+                "existed_table_opts": ExistedTableOptions(method=ExistedTableOption.APPEND)
+            }
+            sdk.import_local_file_to_table(config)
+        """
         if not table_config:
             raise ValueError("table_config is required")
 
@@ -123,14 +167,21 @@ class SDKClient:
         if not config.get("new_table"):
             if not config.get("table_id"):
                 raise ValueError("table_config.table_id is required when new_table is False")
-            config.setdefault("existed_table", [])
+            # Initialize existed_table to empty list if it's None or doesn't exist
+            if config.get("existed_table") is None:
+                config["existed_table"] = []
+            else:
+                config.setdefault("existed_table", [])
+            
+            # Convert ExistedTableOptions to dict if needed
+            if "existed_table_opts" in config and isinstance(config["existed_table_opts"], ExistedTableOptions):
+                config["existed_table_opts"] = asdict(config["existed_table_opts"])
 
         conn_file_id = conn_file_ids[0]
         meta = [{"filename": conn_file_id, "path": "/"}]
 
         return self.raw.upload_connector_file(
             "123456",
-            None,
             meta=meta,
             table_config=config,
         )

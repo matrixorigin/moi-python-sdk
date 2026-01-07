@@ -899,13 +899,11 @@ class RawClient:
         if extra_fields:
             fields.update(extra_fields)
 
-        files_arg = files_payload if files_payload else {}
-        return self.post_multipart(
-            "/connectors/upload",
-            files=files_arg,
-            fields=fields,
-            *opts,
-        )
+        # Ensure multipart/form-data is used even when only table_config is provided.
+        # requests requires a non-empty files dict to set multipart content-type.
+        files_arg = files_payload if files_payload else {"__empty": ("", b"")}
+        # Use positional arguments to avoid conflicting with *opts when callers pass None.
+        return self.post_multipart("/connectors/upload", files_arg, fields, *opts)
 
     def download_connector_file(self, request: Optional[Dict[str, Any]], *opts: CallOption) -> Any:
         if request is None:

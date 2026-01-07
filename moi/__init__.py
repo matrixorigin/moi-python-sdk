@@ -6,7 +6,7 @@ A Python client library for interacting with the MOI Catalog Service.
 
 from .client import RawClient
 from .errors import APIError, HTTPError, ErrBaseURLRequired, ErrAPIKeyRequired, ErrNilRequest
-from .sdk_client import SDKClient, TablePrivInfo
+from .sdk_client import SDKClient, TablePrivInfo, ExistedTableOption, ExistedTableOptions
 from .stream import FileStream, DataAnalysisStream
 from .models import (
     DataAnalysisRequest,
@@ -34,6 +34,8 @@ __all__ = [
     "RawClient",
     "SDKClient",
     "TablePrivInfo",
+    "ExistedTableOption",
+    "ExistedTableOptions",
     "APIError",
     "HTTPError",
     "ErrBaseURLRequired",
