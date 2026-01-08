@@ -1,39 +1,27 @@
 [build-system]
-requires = [
-    "setuptools>=61.0",
-    "wheel",
-    "tomli>=2.0; python_version < '3.11'",
-]
+requires = ["setuptools>=61.0", "wheel", "tomli>=2.0; python_version < '3.11'"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "moi-python-sdk"
-version = "0.1.0.dev"
+version = "0.1.1.dev"
 description = "Python client SDK for the MatrixOrigin MOI Platform"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
-authors = [
-    {name = "MatrixOrigin"}
-]
+license = { text = "Apache-2.0" }
+authors = [{ name = "MatrixOrigin" }]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
 ]
-dependencies = [
-    "requests>=2.31.0",
-]
+dependencies = ["requests>=2.31.0"]
 
 [dependency-groups]
-dev = [
-    "pytest>=7.0.0",
-]
+dev = ["pytest>=7.0.0"]
 
 [tool.pytest.ini_options]
-markers = [
-    "integration: integration tests",
-]
+markers = ["integration: integration tests"]
 
 [project.urls]
 Homepage = "https://github.com/matrixorigin/moi-python-sdk"
