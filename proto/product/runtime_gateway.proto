@@ -1,0 +1,16 @@
+syntax = "proto3";
+package matrixflow.sdk.product;
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+import "google/protobuf/struct.proto";
+
+message RuntimeEdgeTokenRequest {string token=1;}
+message RuntimeEdgeTokenCheck {bool ok=1;string subject=2;string workspace_id=3;string edge_agent_id=4;string expires_at=5;}
+message RuntimeEdgeTokenRenewal {string token=1;string expires_at=2;}
+message RuntimeModelResolveRequest {string model=1;string gateway=2;}
+message RuntimeModelInvokeLocation {string url=1;}
+message RuntimeModelResolution {string model=1;string status=2;string protocol=3;RuntimeModelInvokeLocation invoke=4;}
+message RuntimeRPCRequest {string jsonrpc=1;google.protobuf.Value id=2;string method=3;google.protobuf.Struct params=4;}
+message RuntimeRPCError {int32 code=1;string message=2;}
+message RuntimeRPCResponse {string jsonrpc=1;google.protobuf.Value id=2;google.protobuf.Struct result=3;RuntimeRPCError error=4;}
+message RuntimeExecutorAuthorizationRequest {string task_id=1;string executor_id=2;string run_id=3;string turn_chain_id=4;string tool_call_id=5;}
+message ComputeBindingEvent {string compute_binding_id=1;string event_type=2;string workspace_id=3;string subject_type=4;string subject_id=5;string edge_agent_id=6;string compute_resource_id=7;string spec_id=8;string placement_profile=9;int32 units=10;string lifecycle_instance_id=11;int64 fencing_token=12;string kind=13;string idempotency_key=14;string occurred_at=15;}

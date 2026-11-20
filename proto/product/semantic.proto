@@ -1,0 +1,369 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message SemanticModelSourceCounts {
+  int64 files = 1;
+  int64 tables = 2;
+  int64 total = 3;
+}
+
+message SemanticModelInfo {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.Value tables = 4;
+  google.protobuf.Value files = 5;
+  int64 created_at = 6 [json_name = "created_at"];
+  int64 updated_at = 7 [json_name = "updated_at"];
+  SemanticModelSourceCounts source_counts = 8 [json_name = "source_counts"];
+  // 当前调用方对该模型 canonical `semantic_model.update` 授权结果的投影；
+  // false 表示当前不可写。提交来源时服务端仍重新鉴权。
+  bool can_write = 9 [json_name = "can_write"];
+  // 列表和详情的展示权限；提交时服务端仍重新鉴权。
+  repeated string allowed_actions = 10 [json_name = "allowed_actions"];
+  string semantic_model_kind = 11 [json_name = "semantic_model_kind"];
+  bool drawing_structured_enabled = 12 [json_name = "drawing_structured_enabled"];
+  string drawing_number_policy = 13 [json_name = "drawing_number_policy"];
+  bool can_append_sources = 14 [json_name = "can_append_sources"];
+}
+
+message SemanticModelListResult {
+  repeated SemanticModelInfo items = 1;
+  int64 total = 2;
+  string next_page_token = 3 [json_name = "next_page_token"];
+}
+
+message KnowledgeReferencingAgent {
+  string id = 1;
+  string workspace_id = 2 [json_name = "workspace_id"];
+  string name = 3;
+  string description = 4;
+  string status = 5;
+  string updated_at = 6 [json_name = "updated_at"];
+  int64 knowledge_base_count = 7 [json_name = "knowledge_base_count"];
+}
+
+message KnowledgeReferencingAgentsPage {
+  repeated KnowledgeReferencingAgent items = 1;
+  int64 limit = 2;
+  string next_cursor = 3 [json_name = "next_cursor"];
+}
+
+message SemanticModelTagStat {
+  string tag = 1;
+  int64 count = 2;
+}
+
+message SemanticModelTagListResult {
+  repeated SemanticModelTagStat items = 1;
+}
+
+message SemanticEntry {
+  int64 id = 1;
+  string kind = 2;
+  string key = 3;
+  repeated string tables = 4;
+  google.protobuf.Value spec = 5;
+  int64 created_at = 6 [json_name = "created_at"];
+  int64 updated_at = 7 [json_name = "updated_at"];
+  string domain = 8;
+  string sql_preview = 9 [json_name = "sql_preview"];
+}
+
+message SemanticEntryListResult {
+  repeated SemanticEntry items = 1;
+  int32 total = 2;
+  string next_page_token = 3 [json_name = "next_page_token"];
+}
+
+message SemanticMutationResult {
+  bool updated = 1;
+  bool deleted = 2;
+}
+
+message SemanticImportResult {
+  int32 imported = 1;
+  int64 model_id = 2 [json_name = "model_id"];
+  int32 deleted = 3;
+  bool dry_run = 4 [json_name = "dry_run"];
+}
+
+message SemanticExportResult {
+  SemanticModelInfo model = 1;
+  repeated SemanticEntry entries = 2;
+}
+
+message SemanticValidateResult {
+  bool valid = 1;
+  repeated string errors = 2;
+}
+
+message KnowledgeBaseDataDomain {
+  int64 model_id = 1 [json_name = "model_id"];
+  int64 catalog_id = 2 [json_name = "catalog_id"];
+  int64 database_id = 3 [json_name = "database_id"];
+  int64 raw_volume_id = 4 [json_name = "raw_volume_id"];
+  int64 processed_volume_id = 5 [json_name = "processed_volume_id"];
+  string ensure_status = 6 [json_name = "ensure_status"];
+  string last_ensure_error = 7 [json_name = "last_ensure_error"];
+  int64 last_checked_at = 8 [json_name = "last_checked_at"];
+}
+
+message SemanticModelSource {
+  string row_id = 1 [json_name = "row_id"];
+  string source_id = 2 [json_name = "source_id"];
+  string source_type = 3 [json_name = "source_type"];
+  int64 model_id = 4 [json_name = "model_id"];
+  string resource_id = 5 [json_name = "resource_id"];
+  string source_resource_id = 6 [json_name = "source_resource_id"];
+  string kb_resource_id = 7 [json_name = "kb_resource_id"];
+  string source_file_id = 8 [json_name = "source_file_id"];
+  string kb_file_id = 9 [json_name = "kb_file_id"];
+  int64 source_table_id = 10 [json_name = "source_table_id"];
+  int64 kb_table_id = 11 [json_name = "kb_table_id"];
+  string display_name = 12 [json_name = "display_name"];
+  repeated string path = 13;
+  string source_path = 14 [json_name = "source_path"];
+  string db_name = 15 [json_name = "db_name"];
+  string table_name = 16 [json_name = "table_name"];
+  int64 size_bytes = 17 [json_name = "size_bytes"];
+  int64 row_count = 18 [json_name = "row_count"];
+  string ingest_status = 19 [json_name = "ingest_status"];
+  bool enabled = 20;
+  int64 expires_at = 21 [json_name = "expires_at"];
+  bool expired = 22;
+  bool effective_enabled = 23 [json_name = "effective_enabled"];
+  bool force_enabled_after_expiry = 24 [json_name = "force_enabled_after_expiry"];
+  repeated string tags = 25;
+  reserved 26, 27;
+  reserved "segment_version_id", "index_version";
+  string created_by = 28 [json_name = "created_by"];
+  string updated_by = 29 [json_name = "updated_by"];
+  int64 updated_at = 30 [json_name = "updated_at"];
+  string error = 31;
+  string governance_status = 32 [json_name = "governance_status"];
+  string legacy_origin = 33 [json_name = "legacy_origin"];
+}
+
+message KnowledgeBaseSourceJobRun {
+  string job_id = 1 [json_name = "job_id"];
+  string source_id = 2 [json_name = "source_id"];
+  int64 model_id = 3 [json_name = "model_id"];
+  string job_type = 4 [json_name = "job_type"];
+  string job_status = 5 [json_name = "job_status"];
+  string idempotency_key = 6 [json_name = "idempotency_key"];
+  string operation_id = 7 [json_name = "operation_id"];
+  string workflow_execution_id = 8 [json_name = "workflow_execution_id"];
+  string source_file_id = 9 [json_name = "source_file_id"];
+  string kb_file_id = 10 [json_name = "kb_file_id"];
+  int64 source_table_id = 11 [json_name = "source_table_id"];
+  int64 kb_table_id = 12 [json_name = "kb_table_id"];
+  int64 retry_count = 13 [json_name = "retry_count"];
+  int64 next_retry_at = 14 [json_name = "next_retry_at"];
+  string error = 15;
+  int64 created_at = 16 [json_name = "created_at"];
+  int64 updated_at = 17 [json_name = "updated_at"];
+}
+
+message KnowledgeBaseSourceJobView {
+  string job_id = 1 [json_name = "job_id"];
+  string source_id = 2 [json_name = "source_id"];
+  string job_status = 3 [json_name = "job_status"];
+  string source_file_id = 4 [json_name = "source_file_id"];
+  string kb_file_id = 5 [json_name = "kb_file_id"];
+  int64 source_table_id = 6 [json_name = "source_table_id"];
+  int64 kb_table_id = 7 [json_name = "kb_table_id"];
+  string error = 8;
+  int64 updated_at = 9 [json_name = "updated_at"];
+  bool reconcile_required = 10 [json_name = "reconcile_required"];
+  int64 created_at = 11 [json_name = "created_at"];
+}
+
+message SemanticModelWithSourcesResult {
+  SemanticModelInfo model = 1;
+  KnowledgeBaseDataDomain data_domain = 2 [json_name = "data_domain"];
+  repeated SemanticModelSource sources = 3;
+  repeated KnowledgeBaseSourceJobRun jobs = 4;
+}
+
+message SemanticModelEmptyResult {
+  SemanticModelInfo model = 1;
+  KnowledgeBaseDataDomain data_domain = 2 [json_name = "data_domain"];
+}
+
+message SemanticModelAppendSourcesResult {
+  KnowledgeBaseDataDomain data_domain = 1 [json_name = "data_domain"];
+  repeated SemanticModelSource sources = 2;
+  repeated KnowledgeBaseSourceJobRun jobs = 3;
+  repeated string skipped_existing_file_ids = 4 [json_name = "skipped_existing_file_ids"];
+  repeated int64 skipped_existing_table_ids = 5 [json_name = "skipped_existing_table_ids"];
+}
+
+message SemanticModelSourceListResult {
+  repeated SemanticModelSource items = 1;
+  int32 total = 2;
+  bool legacy_backfill_required = 3 [json_name = "legacy_backfill_required"];
+  int32 page = 4;
+  int32 page_size = 5 [json_name = "page_size"];
+  string display_status = 6 [json_name = "display_status"];
+}
+
+message SemanticModelSourceSelectionPreviewResult {
+  int32 file_count = 1 [json_name = "file_count"];
+  int32 table_count = 2 [json_name = "table_count"];
+  int32 total_count = 3 [json_name = "total_count"];
+}
+
+message SemanticModelSourceJobListResult {
+  repeated KnowledgeBaseSourceJobView items = 1;
+  int32 total = 2;
+  bool reconcile_required = 3 [json_name = "reconcile_required"];
+}
+
+message SemanticModelSourceExistenceResult {
+  repeated string file_ids = 1 [json_name = "file_ids"];
+  repeated int64 table_ids = 2 [json_name = "table_ids"];
+}
+
+message SemanticModelSourcePreview {
+  bool available = 1;
+  string content = 2;
+  string reason = 3;
+}
+
+message SemanticModelSourceFileInfo {
+  repeated string tags = 1;
+  int64 expires_at = 2 [json_name = "expires_at"];
+  bool enabled = 3;
+  bool expired = 4;
+  bool effective_enabled = 5 [json_name = "effective_enabled"];
+  bool force_enabled_after_expiry = 6 [json_name = "force_enabled_after_expiry"];
+  reserved 7, 8;
+  reserved "index_version", "segment_version_id";
+}
+
+message SemanticModelSegmentStatus {
+  bool available = 1;
+  string reason = 2;
+  int32 total = 3;
+  string next_cursor = 4 [json_name = "next_cursor"];
+}
+
+message SemanticModelSegment {
+  string segment_id = 1 [json_name = "segment_id"];
+  reserved 2, 6;
+  reserved "version_id", "index_version";
+  int64 model_id = 3 [json_name = "model_id"];
+  string source_id = 4 [json_name = "source_id"];
+  string kb_file_id = 5 [json_name = "kb_file_id"];
+  string level = 7;
+  int64 chunk_index = 8 [json_name = "chunk_index"];
+  string chunk_id = 9 [json_name = "chunk_id"];
+  string content = 10;
+  string ocr_text = 11 [json_name = "ocr_text"];
+  string image_description = 12 [json_name = "image_description"];
+  string image_file_id = 13 [json_name = "image_file_id"];
+  string page_image_file_id = 14 [json_name = "page_image_file_id"];
+  google.protobuf.Value bbox = 15;
+  int64 word_count = 16 [json_name = "word_count"];
+  int64 recall_count = 17 [json_name = "recall_count"];
+  bool enabled = 18;
+  google.protobuf.Value metadata = 19;
+  int64 created_at = 20 [json_name = "created_at"];
+  int64 updated_at = 21 [json_name = "updated_at"];
+}
+
+message SemanticModelDocumentSegment {
+  string segment_id = 1 [json_name = "segment_id"];
+  string segment_type = 2 [json_name = "segment_type"];
+  optional int64 start_ms = 3 [json_name = "start_ms"];
+  optional int64 end_ms = 4 [json_name = "end_ms"];
+  string level = 5;
+  int64 chunk_index = 6 [json_name = "chunk_index"];
+  string chunk_id = 7 [json_name = "chunk_id"];
+  string content = 8;
+  string ocr_text = 9 [json_name = "ocr_text"];
+  string image_description = 10 [json_name = "image_description"];
+  string image_file_id = 11 [json_name = "image_file_id"];
+  string page_image_file_id = 12 [json_name = "page_image_file_id"];
+  int64 word_count = 13 [json_name = "word_count"];
+  int64 recall_count = 14 [json_name = "recall_count"];
+  bool enabled = 15;
+  google.protobuf.Value metadata = 16;
+}
+
+message SemanticModelSourceDocument {
+  SemanticModelSource source = 1;
+  SemanticModelSourcePreview preview = 2;
+  SemanticModelSourceFileInfo file_info = 3 [json_name = "file_info"];
+  SemanticModelSegmentStatus segment_status = 4 [json_name = "segment_status"];
+  reserved 5, 6, 7, 8, 9;
+  reserved "current_segment_version_id", "current_index_version", "selected_segment_version_id", "selected_index_version", "segment_versions";
+  repeated SemanticModelDocumentSegment segments = 10;
+  string etag = 11;
+}
+
+message SemanticModelSegmentMutationResult {
+  SemanticModelSourceDocument document = 1;
+}
+
+message SemanticModelSourceGovernanceResult {
+  SemanticModelSource source = 1;
+}
+
+message SemanticModelImportEntry {string domain = 1; string kind = 2; string key = 3; repeated string tables = 4; google.protobuf.Value spec = 5;}
+message SemanticModelImportRequest {string name = 1; string description = 2; google.protobuf.Value tables = 3; google.protobuf.Value files = 4; repeated SemanticModelImportEntry entries = 5;}
+
+// Runtime knowledge operations use the current sandbox task identity. Existing
+// semantic-model management requests and responses retain their contracts.
+message KnowledgeFindFilesRequest { string request_id=1; string query=2; int32 top_k=3; }
+// source_page enumerates enabled text passages of one bound source without
+// semantic ranking. It is mutually exclusive with the ordinary search fields.
+message KnowledgeSourcePage { int64 semantic_model_id=1; string file_id=2; string cursor=3; int32 page_size=4; }
+// fulltext_only skips embedding and vector candidates. Matching follows the
+// existing full-text index tokenizer; no hits do not prove corpus-wide absence.
+message KnowledgeSearchRequest { string request_id=1; repeated string keywords=2; repeated string file_ids=3; string volume_id=4; int32 max_hits=5; int32 max_rows=6; int32 before=7; int32 after=8; KnowledgeSourcePage source_page=9; bool fulltext_only=10; }
+message KnowledgeReadDocumentRequest { string request_id=1; string markdown_file_id=2; int32 cursor=3; int32 limit_chars=4; }
+message KnowledgeSearchDocumentRequest { string request_id=1; string markdown_file_id=2; string query=3; int32 max_matches=4; int32 context_chars=5; }
+message KnowledgeSearchImagesRequest { string request_id=1; string query_text=2; string query_visual_file_id=3; string ranking_profile=4; int32 top_k=5; }
+message KnowledgeReadEvidenceRequest {
+  string request_id=1;
+  string artifact_id=2;
+  string chunk_id=3;
+  string file_id=4;
+  optional int64 semantic_model_id=5;
+  google.protobuf.Value cursor=6;
+  int32 limit_chars=7;
+  optional int32 part_index=8;
+  // Prove possession of the complete locally inspected passage. The owner
+  // verifies this digest against this task's persisted evidence before
+  // recording a full local read; it cannot be combined with pagination.
+  string local_content_sha256=9;
+  // Atomically register the selected locally inspected passages. Cannot be
+  // combined with the single-passage or pagination fields above.
+  repeated KnowledgeLocalEvidenceRead local_reads=10;
+}
+message KnowledgeLocalEvidenceRead {
+  string artifact_id=1;
+  string chunk_id=2;
+  string file_id=3;
+  optional int64 semantic_model_id=4;
+  string local_content_sha256=5;
+}
+message KnowledgeDescribeTablesRequest { string request_id=1; repeated string table_names=2; int32 include_samples=3; int32 max_ddl_chars=4; repeated string keywords=5; }
+message KnowledgeQueryRequest { string request_id=1; string sql=2; int32 max_rows=3; repeated string semantic_claims=4; }
+message KnowledgeCiteRequest {
+  string request_id=1;
+  repeated google.protobuf.Struct sources=2;
+  // Return every unread selected source in durable output for CLI repair.
+  // The model-facing view remains bounded; citation validation is unchanged.
+  bool complete_read_requirements=3;
+}
+// output and artifact data retain the domain's existing extensible evidence
+// documents; clients must preserve source identities and Unicode content.
+message KnowledgeRuntimeResult { string call_id=1; google.protobuf.Struct output=2; repeated google.protobuf.Struct artifacts=3; google.protobuf.Struct metadata=4; bool failed=5; }

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message AuditOperationLog {
+  string id = 1;
+  string workspace_id = 2;
+  string operator_user_id = 3;
+  string operator_name_snapshot = 4;
+  string method = 5;
+  string path = 6;
+  string route_pattern = 7;
+  string query_json = 8;
+  string request_body_json = 9;
+  string response_body_json = 10;
+  int32 status_code = 11;
+  string result = 12;
+  string error_code = 13;
+  string error_message = 14;
+  int64 duration_ms = 15;
+  string client_ip = 16;
+  string user_agent = 17;
+  string request_id = 18;
+  string action_type = 19;
+  string resource_type = 20;
+  string resource_id = 21;
+  string resource_name = 22;
+  string operation_summary = 23;
+  string metadata_json = 24;
+  string created_at = 25;
+}
+
+message AuditLogListResult {
+  repeated AuditOperationLog items = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message AuditLogOverviewResult {
+  int64 total = 1;
+  int64 success = 2;
+  int64 failed = 3;
+}

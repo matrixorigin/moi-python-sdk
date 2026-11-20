@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+// Memory is one consumer memory returned by the Product API.
+// (POST /newmoi/memories/{retrieve,search,fulltext-search,query}).
+message Memory {
+  string memory_id = 1;
+  reserved 2;
+  reserved "user_id";
+  optional string author_id = 3;
+  string subject_id = 4;
+  string memory_type = 5;
+  string content = 6;
+  string trust_tier = 7;
+  double initial_confidence = 8;
+  bool is_active = 9;
+  optional string session_id = 10;
+  optional string observed_at = 11;
+  optional string created_at = 12;
+  optional double retrieval_score = 13;
+  google.protobuf.Struct extra_metadata = 14;
+}
+
+// MemoryListResult is the payload of memory retrieval endpoints. Exact
+// structured query may also return a cursor for the next page.
+message MemoryListResult {
+  repeated Memory memories = 1;
+  optional string next_cursor = 2;
+}
+
+// ConsumerProfileRenderResult is the public consumer-profile render contract
+// (GET /newmoi/consumer-profiles/{user_id}/render).
+message ConsumerProfileRenderResult {
+  string subject_id = 1;
+  string text = 2;
+  int32 token_estimate = 3;
+  repeated string pending_conflicts = 4;
+}

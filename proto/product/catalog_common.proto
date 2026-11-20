@@ -1,0 +1,319 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message RefItem {
+  string ref_id = 1;
+  string ref_type = 2;
+  string volume_id = 3;
+  string volume_name = 4;
+  string table_id = 5;
+  string table_name = 6;
+}
+
+message RefListResult {
+  repeated RefItem list = 1;
+}
+
+message CreateFolderResult {
+  int64 id = 1;
+}
+
+message DataTag {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string allowed_actions = 4 [json_name = "allowed_actions"];
+}
+
+// Wire SoT: moi-backend userperm.DescribeTagListResponse (tag_list + total).
+message DataTagListResult {
+  int32 total = 1;
+  repeated DataTag tag_list = 2 [json_name = "tag_list"];
+}
+
+message PathResult {
+  string path = 1;
+}
+
+message URLResult {
+  string url = 1;
+  string expires_at = 2;
+}
+
+message BoolDataResult {
+  bool data = 1;
+}
+
+message CatalogNL2SQLRunResult {
+  repeated string columns = 1;
+  repeated google.protobuf.ListValue rows = 2;
+}
+
+message HealthResult {
+  string status = 1;
+}
+
+message CatalogTreeNode {
+  reserved 1;
+  string type = 2;
+  string name = 3;
+  string description = 4;
+  bool has_workflow_target_ref = 5;
+  bool reserved = 6;
+  bool is_pub = 7;
+  bool is_sub = 8;
+  repeated CatalogTreeNode node_list = 9;
+  string display_name = 10;
+  string display_description = 11;
+  CatalogTreeTriggerBinding trigger_binding = 12;
+  google.protobuf.Value id = 13;
+  repeated string allowed_actions = 14;
+}
+
+message CatalogTreeResult {
+  repeated CatalogTreeNode tree = 1;
+  string next_page_token = 2 [json_name = "next_page_token"];
+}
+
+message CatalogTreeTriggerBinding {
+  bool bound = 1;
+  // Matches moi-backend VolumeTriggerBinding.trigger_id (int64 DB id).
+  int64 trigger_id = 2;
+  string workflow_id = 3;
+  string workflow_name = 4;
+  string workflow_version_id = 5;
+}
+
+message CatalogDTO {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  int32 database_count = 4;
+  int32 volume_count = 5;
+  int32 file_count = 6;
+  int32 table_count = 7;
+  string created_at = 8;
+  string created_by = 9;
+  string updated_at = 10;
+  string updated_by = 11;
+  bool reserved = 12;
+  string display_name = 14;
+  string display_description = 15;
+  repeated string allowed_actions = 16;
+}
+
+message CatalogListResult {
+  repeated CatalogDTO list = 1;
+  string next_page_token = 2 [json_name = "next_page_token"];
+}
+
+message IDResult {
+  int64 id = 1;
+}
+
+message CatalogInfo {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  string display_name = 4;
+  string display_description = 5;
+}
+
+message CatalogInfoResult {
+  CatalogInfo catalog = 1;
+}
+
+message DatabaseDTO {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  optional int32 volume_count = 4;
+  int32 file_count = 5 [deprecated = true];
+  optional int32 table_count = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string created_by = 9;
+  string updated_by = 10;
+  bool reserved = 11;
+  bool is_pub = 12;
+  bool is_sub = 13;
+  string display_name = 14;
+  string display_description = 15;
+  repeated string allowed_actions = 16;
+  optional int32 operator_count = 17;
+}
+
+message DatabaseListResult {
+  repeated DatabaseDTO list = 1;
+  string next_page_token = 2 [json_name = "next_page_token"];
+}
+
+message DatabaseInfo {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  string display_name = 4;
+  string display_description = 5;
+}
+
+message DatabaseInfoResult {
+  DatabaseInfo database = 1;
+}
+
+message DatabaseChild {
+  int64 id = 1;
+  string name = 2;
+  string type = 3;
+  int32 children_count = 4;
+  int64 size = 5;
+  string created_at = 6;
+  string created_by = 7;
+  string updated_at = 8;
+  string updated_by = 9;
+  string description = 10;
+  bool reserved = 11;
+  bool is_pub = 12;
+  bool is_sub = 13;
+  string display_name = 14;
+  string display_description = 15;
+  repeated string allowed_actions = 16;
+}
+
+message DatabaseChildrenResult {
+  repeated DatabaseChild list = 1;
+  string next_page_token = 2 [json_name = "next_page_token"];
+}
+
+message DatabaseTableLeaf {
+  int64 table_id = 1 [json_name = "table_id"];
+  string table_name = 2 [json_name = "table_name"];
+  int64 database_id = 3 [json_name = "database_id"];
+  string created_at = 4 [json_name = "created_at"];
+  string updated_at = 5 [json_name = "updated_at"];
+}
+
+message DatabaseTableLeavesResult {
+  repeated DatabaseTableLeaf items = 1;
+  int32 total = 2;
+  string next_page_token = 3 [json_name = "next_page_token"];
+}
+
+message VolumeInfo {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  string display_name = 4 [json_name = "display_name"];
+  string display_description = 5 [json_name = "display_description"];
+  string created_by = 6 [json_name = "created_by"];
+  string created_at = 7 [json_name = "created_at"];
+  string updated_at = 8 [json_name = "updated_at"];
+  optional int64 file_count = 9 [json_name = "file_count"];
+  optional int64 total_size_bytes = 10 [json_name = "total_size_bytes"];
+}
+
+message VolumeInfoResult {
+  VolumeInfo volume = 1;
+}
+
+message CatalogCreateTableResult {
+  int64 id = 1;
+}
+
+message CatalogTableColumn {
+  string name = 1;
+  string type = 2;
+  optional bool is_pk = 3 [json_name = "is_pk"];
+  string comment = 4;
+  repeated int32 precision = 5;
+  optional string default = 6;
+}
+
+message CatalogTableStatistic {
+  string name = 1;
+  string type = 2;
+  optional bool is_pk = 3 [json_name = "is_pk"];
+  optional string default = 4;
+  string comment = 5;
+  string max_value = 6 [json_name = "max_value"];
+  string min_value = 7 [json_name = "min_value"];
+}
+
+message CatalogTableInfoResult {
+  string name = 1;
+  int64 lines = 2;
+  int64 size = 3;
+  int64 created_at = 4 [json_name = "created_at"];
+  int64 updated_at = 5 [json_name = "updated_at"];
+  string created_by = 6 [json_name = "created_by"];
+  string description = 7;
+  string comment = 8;
+  repeated CatalogTableColumn columns = 9;
+  string create_sql = 10 [json_name = "create_sql"];
+  repeated CatalogTableStatistic stats = 11;
+}
+
+message CatalogMultiTableInfoResult {
+  repeated CatalogTableInfoResult tables = 1;
+}
+
+message CatalogTableDataColumn {
+  string name = 1;
+  string type = 2;
+}
+
+message CatalogTableDataResult {
+  repeated google.protobuf.ListValue data = 1;
+  repeated CatalogTableDataColumn columns = 2;
+  int64 total_rows = 3 [json_name = "total_rows"];
+  int32 page = 4;
+  int32 page_size = 5 [json_name = "page_size"];
+}
+
+message CatalogTableOverviewItem {
+  string name = 1;
+  repeated string columns = 2;
+}
+
+message CatalogTableOverviewResult {
+  repeated CatalogTableOverviewItem tables = 1;
+}
+
+message DataDashboardTableSearchItem {
+  int64 table_id = 1 [json_name = "table_id"];
+  string table_name = 2 [json_name = "table_name"];
+  int64 database_id = 3 [json_name = "database_id"];
+  string database_name = 4 [json_name = "database_name"];
+  int64 catalog_id = 5 [json_name = "catalog_id"];
+  string catalog_name = 6 [json_name = "catalog_name"];
+  string description = 7;
+  repeated string matched_fields = 8 [json_name = "matched_fields"];
+  repeated string matched_columns = 9 [json_name = "matched_columns"];
+  bool metadata_match = 10 [json_name = "metadata_match"];
+}
+
+message DataDashboardTableSearchResult {
+  repeated DataDashboardTableSearchItem items = 1;
+  int32 total = 2;
+  string next_page_token = 3 [json_name = "next_page_token"];
+}
+
+// UI action hints for bounded candidates; never an execution authorization.
+message CatalogResourceAllowedActions {
+  string resource_id = 1 [json_name = "resource_id"];
+  repeated string allowed_actions = 2 [json_name = "allowed_actions"];
+}
+
+message CatalogAllowedActionsResult {
+  repeated CatalogResourceAllowedActions items = 1;
+}
+
+message CatalogGarbageCollectionRequest {int64 orphan_file_threshold_hours = 1; int32 batch_size = 2;}
+message CatalogGarbageCollectionResult {int64 orphan_files_cleaned = 1; int64 deleted_volumes_cleaned = 2; string message = 3;}
+message WorkspaceTableColumnsRequest {int64 database_id = 1; int64 table_id = 2; string table_name = 3;}
+message WorkspaceTableOverviewItem {string db_name = 1; string table_name = 2; repeated string col_names = 3;}
+message WorkspaceTableOverviewResult {repeated WorkspaceTableOverviewItem tables = 1;}

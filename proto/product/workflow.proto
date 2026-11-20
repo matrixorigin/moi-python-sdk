@@ -1,0 +1,975 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message WorkflowSummary {
+  string id = 1;
+  string name = 2;
+  string source_type = 3 [json_name = "source_type"];
+  string execution_mode = 4 [json_name = "execution_mode"];
+  string cron_expression = 5 [json_name = "cron_expression"];
+  string draft_id = 6 [json_name = "draft_id"];
+  string candidate_id = 7 [json_name = "candidate_id"];
+  string status = 8;
+}
+
+message WorkflowDeploymentEnvelope {
+  WorkflowSummary workflow = 1;
+  google.protobuf.Struct deployment = 2;
+  repeated string warnings = 3;
+}
+
+message WorkflowCandidateRef {
+  string task_id = 1 [json_name = "task_id"];
+  string artifact_id = 2 [json_name = "artifact_id"];
+}
+
+message WorkflowCandidateDiagnostic {
+  string code = 1;
+  string stage = 2;
+  string node = 3;
+  string message = 4;
+  string suggestion = 5;
+  string path = 6;
+  int32 line = 7;
+  int32 column = 8;
+  string severity = 9;
+  google.protobuf.Struct evidence = 10;
+}
+
+message WorkflowCandidateCustomOperator {
+  string snapshot_id = 1 [json_name = "snapshot_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string name = 3;
+  string identifier = 4;
+  string description = 5;
+  string version = 6;
+  string kind = 7;
+  string language = 8;
+  string handler = 9;
+  string isolation_level = 10 [json_name = "isolation_level"];
+  string input_schema = 11 [json_name = "input_schema"];
+  string output_schema = 12 [json_name = "output_schema"];
+  string source_code = 13 [json_name = "source_code"];
+  string source_digest = 14 [json_name = "source_digest"];
+  string content_digest = 15 [json_name = "content_digest"];
+}
+
+message WorkflowCandidateIntent {
+  string goal = 1;
+  string acceptance_criteria = 2 [json_name = "acceptance_criteria"];
+  string dataflow = 3;
+}
+
+message WorkflowCandidateBundle {
+  bool ok = 1;
+  string candidate_id = 2 [json_name = "candidate_id"];
+  string summary = 3;
+  string message = 4;
+  google.protobuf.Struct workflow = 5;
+  google.protobuf.Struct runtime_fields = 6 [json_name = "runtime_fields"];
+  google.protobuf.Struct runtime_layout = 7 [json_name = "runtime_layout"];
+  repeated WorkflowCandidateDiagnostic diagnostics = 8;
+  string catalog_revision = 9 [json_name = "catalog_revision"];
+  string snapshot_digest = 10 [json_name = "snapshot_digest"];
+  string syntax_version = 11 [json_name = "syntax_version"];
+  string compiler_version = 12 [json_name = "compiler_version"];
+  string source_digest = 13 [json_name = "source_digest"];
+  string artifact_digest = 14 [json_name = "artifact_digest"];
+  string envelope_digest = 15 [json_name = "envelope_digest"];
+  string source_code = 16 [json_name = "source_code"];
+  repeated WorkflowCandidateCustomOperator custom_operators = 17 [json_name = "custom_operators"];
+  string proposal_id = 18 [json_name = "proposal_id"];
+  WorkflowCandidateRef parent_ref = 19 [json_name = "parent_ref"];
+  WorkflowCandidateRef restored_from = 20 [json_name = "restored_from"];
+  string revision_id = 21 [json_name = "revision_id"];
+  WorkflowCandidateIntent intent = 22;
+  string test_status = 23 [json_name = "test_status"];
+  google.protobuf.Struct test_result = 24 [json_name = "test_result"];
+  repeated WorkflowCandidateStepNote step_notes = 25 [json_name = "step_notes"];
+}
+
+message WorkflowCandidateStepNote {
+  string node_id = 1 [json_name = "node_id"];
+  string note = 2;
+  // Plan step the node belongs to, as written in the agent's plan.
+  string stage = 3;
+}
+
+message WorkflowCandidateConfirmation {
+  string proposal_id = 1 [json_name = "proposal_id"];
+  string idempotency_key = 3 [json_name = "idempotency_key"];
+}
+
+message WorkflowCandidateProposalRejection {
+  string proposal_id = 1 [json_name = "proposal_id"];
+  string status = 2;
+}
+
+message WorkflowCandidateAcceptance {
+  WorkflowCandidateRef candidate_ref = 1 [json_name = "candidate_ref"];
+  string accepted_at = 2 [json_name = "accepted_at"];
+  WorkflowCandidateBundle candidate = 3;
+}
+
+message WorkflowParameterSummary {
+  string status = 1;
+  int32 total_fields = 2 [json_name = "total_fields"];
+  int32 required_fields = 3 [json_name = "required_fields"];
+  int32 filled_required_fields = 4 [json_name = "filled_required_fields"];
+  int32 missing_required_fields = 5 [json_name = "missing_required_fields"];
+  repeated string missing_required_field_ids = 6 [json_name = "missing_required_field_ids"];
+  repeated string missing_required_field_labels = 7 [json_name = "missing_required_field_labels"];
+}
+
+message WorkflowExecutionSummary {
+  int32 total_executions = 1 [json_name = "total_executions"];
+  int32 active_executions = 2 [json_name = "active_executions"];
+  string latest_execution_id = 3 [json_name = "latest_execution_id"];
+  string latest_execution_status = 4 [json_name = "latest_execution_status"];
+  string latest_execution_at = 5 [json_name = "latest_execution_at"];
+  // Newest non-terminal execution for pause/resume targets. Independent of latest_*.
+  string active_execution_id = 6 [json_name = "active_execution_id"];
+  string active_execution_status = 7 [json_name = "active_execution_status"];
+}
+
+message WorkflowTriggerSummary {
+  string mode = 1;
+  bool configured = 2;
+  bool enabled = 3;
+  int64 volume_id = 4 [json_name = "volume_id"];
+  string cron_expression = 5 [json_name = "cron_expression"];
+  string service_name = 6 [json_name = "service_name"];
+  // Published API invocation schemas, encoded as JSON strings by the service.
+  string input_schema = 7 [json_name = "input_schema"];
+  string output_schema = 8 [json_name = "output_schema"];
+}
+
+message WorkflowComputeResourceBinding {
+  string id = 1;
+  string name = 2;
+  bool workflow_level = 3 [json_name = "workflow_level"];
+  repeated string node_names = 4 [json_name = "node_names"];
+}
+
+message WorkflowListItem {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string source_type = 4 [json_name = "source_type"];
+  string status = 5;
+  repeated string available_actions = 6 [json_name = "available_actions"];
+  string execution_mode = 7 [json_name = "execution_mode"];
+  string cron_expression = 8 [json_name = "cron_expression"];
+  string draft_id = 9 [json_name = "draft_id"];
+  string candidate_id = 10 [json_name = "candidate_id"];
+  string latest_workflow_version_id = 11 [json_name = "latest_workflow_version_id"];
+  int32 latest_version = 12 [json_name = "latest_version"];
+  string latest_version_status = 13 [json_name = "latest_version_status"];
+  string compute_resource_id = 14 [json_name = "compute_resource_id"];
+  repeated WorkflowComputeResourceBinding compute_resource_bindings = 15 [json_name = "compute_resource_bindings"];
+  WorkflowParameterSummary parameter_summary = 16 [json_name = "parameter_summary"];
+  WorkflowExecutionSummary execution_summary = 17 [json_name = "execution_summary"];
+  WorkflowTriggerSummary trigger_summary = 18 [json_name = "trigger_summary"];
+  google.protobuf.Timestamp created_at = 19 [json_name = "created_at"];
+  google.protobuf.Timestamp updated_at = 20 [json_name = "updated_at"];
+}
+
+message WorkflowListEnvelope {
+  int32 total = 1;
+  repeated WorkflowListItem workflows = 2;
+}
+
+// WorkflowUIResource is the workspace management view of a bound API service HTML asset.
+message WorkflowUIResource {
+  string resource_uri = 1 [json_name = "resource_uri"];
+  string file_id = 2 [json_name = "file_id"];
+  string mime_type = 3 [json_name = "mime_type"];
+}
+
+message WorkflowDetail {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string source_type = 4 [json_name = "source_type"];
+  string status = 5;
+  repeated string available_actions = 6 [json_name = "available_actions"];
+  string execution_mode = 7 [json_name = "execution_mode"];
+  string cron_expression = 8 [json_name = "cron_expression"];
+  string goal = 9;
+  string planner_model = 10 [json_name = "planner_model"];
+  string draft_id = 11 [json_name = "draft_id"];
+  string candidate_id = 12 [json_name = "candidate_id"];
+  string dsl_yaml = 13 [json_name = "dsl_yaml"];
+  google.protobuf.Struct run_context = 14 [json_name = "run_context"];
+  // Backend workflow detail exposes runtime form under runtime_fields/runtime_layout.
+  // Keep proto field names stable for generated getters; wire JSON names match product API.
+  google.protobuf.Struct input_form = 15 [json_name = "runtime_fields"];
+  google.protobuf.Struct form_layout = 16 [json_name = "runtime_layout"];
+  google.protobuf.Struct default_values = 17 [json_name = "default_values"];
+  string moi_workflow_def_id = 18 [json_name = "moi_workflow_def_id"];
+  string latest_workflow_version_id = 19 [json_name = "latest_workflow_version_id"];
+  string compute_resource_id = 20 [json_name = "compute_resource_id"];
+  repeated WorkflowComputeResourceBinding compute_resource_bindings = 21 [json_name = "compute_resource_bindings"];
+  google.protobuf.Timestamp created_at = 22 [json_name = "created_at"];
+  google.protobuf.Timestamp updated_at = 23 [json_name = "updated_at"];
+  WorkflowExecutionSummary execution_summary = 24 [json_name = "execution_summary"];
+  WorkflowTriggerSummary trigger_summary = 25 [json_name = "trigger_summary"];
+  int32 latest_version = 26 [json_name = "latest_version"];
+  string latest_version_status = 27 [json_name = "latest_version_status"];
+  string definition_format = 28 [json_name = "definition_format"];
+  google.protobuf.Struct workflow = 29;
+  string session_id = 30 [json_name = "session_id"];
+  google.protobuf.Struct notification_config = 32 [json_name = "notification_config"];
+  google.protobuf.Struct design_graph = 31 [json_name = "design_graph"];
+  // Present only when the dynamic service has a bound HTML UI.
+  WorkflowUIResource ui_resource = 33 [json_name = "ui_resource"];
+  // The automation task that owns this read-only managed workflow.
+  string automation_task_id = 34 [json_name = "automation_task_id"];
+}
+
+message WorkflowEnvelope {
+  WorkflowDetail workflow = 1;
+}
+
+message WorkflowDeleteEnvelope {
+  bool deleted = 1;
+}
+
+message WorkflowRunEnvelope {
+  WorkflowRunResult workflow_run = 1 [json_name = "workflow_run"];
+}
+
+message WorkflowBatchRetryEnvelope {
+  string source_dispatch_job_id = 1 [json_name = "source_dispatch_job_id"];
+  string dispatch_job_id = 2 [json_name = "dispatch_job_id"];
+  string status = 3;
+  int32 accepted_count = 4 [json_name = "accepted_count"];
+  bool replayed = 5;
+}
+
+message WorkflowRunResult {
+  // For a dispatched batch this retains the historical submission ID. Use
+  // dispatch_job_id to observe dispatch and list runs for actual executions.
+  string execution_id = 1 [json_name = "execution_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  string status = 3;
+  repeated string available_actions = 4 [json_name = "available_actions"];
+  string execution_mode = 5 [json_name = "execution_mode"];
+  string moi_task_id = 6 [json_name = "moi_task_id"];
+  string moi_case_id = 7 [json_name = "moi_case_id"];
+  string moi_workflow_def_id = 8 [json_name = "moi_workflow_def_id"];
+  string moi_workflow_version_id = 9 [json_name = "moi_workflow_version_id"];
+  string error = 10;
+  string dispatch_job_id = 11 [json_name = "dispatch_job_id"];
+}
+
+message WorkflowDispatchJobEnvelope {
+  WorkflowDispatchJob dispatch_job = 1 [json_name = "dispatch_job"];
+}
+
+message WorkflowDispatchJob {
+  string dispatch_job_id = 1 [json_name = "dispatch_job_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  // Dispatch completion means all selected files have been queued, not that
+  // their executions have completed. Delivery completion is reported separately.
+  string status = 3;
+  int64 total_deliveries = 4 [json_name = "total_deliveries"];
+  int64 pending_deliveries = 5 [json_name = "pending_deliveries"];
+  int64 failed_deliveries = 6 [json_name = "failed_deliveries"];
+}
+
+message WorkflowExecutionListEnvelope {
+  int32 total = 1;
+  repeated WorkflowExecutionListItem executions = 2;
+}
+
+message WorkflowExecutionListItem {
+  string execution_id = 1 [json_name = "execution_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  string workflow_name = 3 [json_name = "workflow_name"];
+  string status = 4;
+  repeated string available_actions = 5 [json_name = "available_actions"];
+  string execution_mode = 6 [json_name = "execution_mode"];
+  string cron_expression = 7 [json_name = "cron_expression"];
+  string moi_task_id = 8 [json_name = "moi_task_id"];
+  string moi_case_id = 9 [json_name = "moi_case_id"];
+  string moi_workflow_def_id = 10 [json_name = "moi_workflow_def_id"];
+  string moi_workflow_version_id = 11 [json_name = "moi_workflow_version_id"];
+  string error = 12;
+  string data_name = 13 [json_name = "data_name"];
+  string file_id = 14 [json_name = "file_id"];
+  google.protobuf.Timestamp started_at = 15 [json_name = "started_at"];
+  google.protobuf.Timestamp ended_at = 16 [json_name = "ended_at"];
+  google.protobuf.Timestamp created_at = 17 [json_name = "created_at"];
+  google.protobuf.Timestamp updated_at = 18 [json_name = "updated_at"];
+  string pause_scope = 19 [json_name = "pause_scope"];
+  string dispatch_job_id = 20 [json_name = "dispatch_job_id"];
+}
+
+message WorkflowExecutionEnvelope {
+  WorkflowExecutionDetail execution = 1;
+}
+
+message WorkflowExecutionDetail {
+  string execution_id = 1 [json_name = "execution_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  string status = 3;
+  repeated string available_actions = 4 [json_name = "available_actions"];
+  string execution_mode = 5 [json_name = "execution_mode"];
+  string cron_expression = 6 [json_name = "cron_expression"];
+  google.protobuf.Struct input_payload = 7 [json_name = "input_payload"];
+  google.protobuf.Struct vars_payload = 8 [json_name = "vars_payload"];
+  string moi_task_id = 9 [json_name = "moi_task_id"];
+  string moi_case_id = 10 [json_name = "moi_case_id"];
+  string moi_workflow_def_id = 11 [json_name = "moi_workflow_def_id"];
+  string moi_workflow_version_id = 12 [json_name = "moi_workflow_version_id"];
+  string error = 13;
+  google.protobuf.Timestamp started_at = 14 [json_name = "started_at"];
+  google.protobuf.Timestamp ended_at = 15 [json_name = "ended_at"];
+  google.protobuf.Timestamp created_at = 16 [json_name = "created_at"];
+  google.protobuf.Timestamp updated_at = 17 [json_name = "updated_at"];
+  // pause_scope is returned by product pause/status for live executions.
+  string pause_scope = 18 [json_name = "pause_scope"];
+  string dispatch_job_id = 19 [json_name = "dispatch_job_id"];
+}
+
+message WorkflowExecutionResultEnvelope {
+  WorkflowExecutionResultDetail result = 1;
+}
+
+message WorkflowExecutionResultDetail {
+  string execution_id = 1 [json_name = "execution_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  string moi_task_id = 3 [json_name = "moi_task_id"];
+  string moi_case_id = 4 [json_name = "moi_case_id"];
+  string status = 5;
+  string case_result = 6 [json_name = "case_result"];
+  string case_error = 7 [json_name = "case_error"];
+  google.protobuf.Struct rerun_context = 8 [json_name = "rerun_context"];
+  google.protobuf.Struct trace = 9;
+  string trace_error = 10 [json_name = "trace_error"];
+  repeated WorkflowExecutionNodeState node_states = 11 [json_name = "node_states"];
+  repeated string available_actions = 12 [json_name = "available_actions"];
+  google.protobuf.Struct job_summary = 13 [json_name = "job_summary"];
+}
+
+message WorkflowExecutionNodeState {
+  string span_id = 1 [json_name = "span_id"];
+  string parent_span_id = 2 [json_name = "parent_span_id"];
+  string node_id = 3 [json_name = "node_id"];
+  string node_name = 4 [json_name = "node_name"];
+  string workitem_id = 5 [json_name = "workitem_id"];
+  string worker_id = 6 [json_name = "worker_id"];
+  string kind = 7;
+  string status = 8;
+  string error = 9;
+  string started_at = 10 [json_name = "started_at"];
+  string ended_at = 11 [json_name = "ended_at"];
+  int64 duration_ms = 12 [json_name = "duration_ms"];
+  string attrs_json = 13 [json_name = "attrs_json"];
+}
+
+message WorkflowFileExecutionList {
+  repeated WorkflowFileExecution executions = 1;
+  int32 total = 2;
+}
+
+message WorkflowFileExecution {
+  string execution_id = 1 [json_name = "execution_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  string status = 3;
+  string execution_mode = 4 [json_name = "execution_mode"];
+  string started_at = 5 [json_name = "started_at"];
+  string ended_at = 6 [json_name = "ended_at"];
+  string created_at = 7 [json_name = "created_at"];
+  string updated_at = 8 [json_name = "updated_at"];
+  string case_id = 9 [json_name = "case_id"];
+  bool scheduler_visible = 10 [json_name = "scheduler_visible"];
+  string case_start_state = 11 [json_name = "case_start_state"];
+  string error = 12;
+}
+
+message WorkflowImportContextEnvelope {
+  WorkflowImportContext import_context = 1 [json_name = "import_context"];
+}
+
+message WorkflowImportContext {
+  string task_id = 1 [json_name = "task_id"];
+  string task_name = 2 [json_name = "task_name"];
+  string run_id = 3 [json_name = "run_id"];
+  string workflow_execution_id = 4 [json_name = "workflow_execution_id"];
+  string workflow_app_id = 5 [json_name = "workflow_app_id"];
+  string moi_task_id = 6 [json_name = "moi_task_id"];
+  string moi_case_id = 7 [json_name = "moi_case_id"];
+  int32 status = 8;
+  string error_message = 9 [json_name = "error_message"];
+  int64 row_count = 10 [json_name = "row_count"];
+  int64 file_count = 11 [json_name = "file_count"];
+  int64 total = 12;
+  int64 total_success = 13 [json_name = "total_success"];
+  int64 total_failed = 14 [json_name = "total_failed"];
+  string started_at = 15 [json_name = "started_at"];
+  string ended_at = 16 [json_name = "ended_at"];
+  string created_at = 17 [json_name = "created_at"];
+}
+
+message WorkflowImportFileListEnvelope {
+  WorkflowImportContext import_context = 1 [json_name = "import_context"];
+  repeated WorkflowImportFile files = 2;
+  int64 total = 3;
+  int64 total_sum = 4 [json_name = "total_sum"];
+  int64 total_success = 5 [json_name = "total_success"];
+  int64 total_failed = 6 [json_name = "total_failed"];
+}
+
+// WorkflowWorkerTaskCreateRequest is the task payload accepted by the
+// workspace worker-task trigger. data and vars remain JSON-encoded strings.
+message WorkflowWorkerTaskCreateRequest {
+  string name = 1;
+  string workflow_version_id = 2;
+  string data = 3;
+  string vars = 4;
+}
+
+message WorkflowWorkerTaskCreateEnvelope {
+  WorkflowWorkerTaskCreateRequest task = 1;
+}
+
+// WorkflowWorkerTask is the accepted execution identity returned by the
+// workspace worker-task trigger.
+message WorkflowWorkerTask {
+  string id = 1;
+  string name = 2;
+  string workflow_version_id = 3;
+  string workflow_execution_id = 4;
+}
+
+message WorkflowWorkerTaskEnvelope {
+  WorkflowWorkerTask task = 1;
+}
+
+message WorkflowImportFile {
+  string id = 1;
+  string name = 2;
+  int32 type = 3;
+  int32 status = 4;
+  uint64 size = 5;
+  int64 update_time = 6 [json_name = "update_time"];
+  string reason = 7;
+  string user = 8;
+  int64 start_time = 9 [json_name = "start_time"];
+  int64 end_time = 10 [json_name = "end_time"];
+  string path = 11;
+  string run_id = 12 [json_name = "run_id"];
+}
+
+message WorkflowExecutionNodeDetailEnvelope {
+  WorkflowExecutionNodeDetail node = 1;
+  WorkflowExecutionNodeRun run = 2;
+}
+
+message WorkflowExecutionNodeDetail {
+  string flow_id = 1 [json_name = "flow_id"];
+  string name = 2;
+  string node_key = 3 [json_name = "node_key"];
+  string node_type = 4 [json_name = "node_type"];
+  string display_name = 5 [json_name = "display_name"];
+  string workitem_id = 6 [json_name = "workitem_id"];
+  string node_execution_id = 7 [json_name = "node_execution_id"];
+}
+
+message WorkflowExecutionNodeRun {
+  string status = 1;
+  string started_at = 2 [json_name = "started_at"];
+  string ended_at = 3 [json_name = "ended_at"];
+  int64 duration_ms = 4 [json_name = "duration_ms"];
+  string error = 5;
+  google.protobuf.Value runtime_input = 6 [json_name = "runtime_input"];
+  google.protobuf.Value runtime_output = 7 [json_name = "runtime_output"];
+  google.protobuf.Value runtime_vars = 8 [json_name = "runtime_vars"];
+  google.protobuf.Value config = 9;
+  map<string, google.protobuf.Value> metrics = 10;
+  DeveloperLogs developer_logs = 11 [json_name = "developer_logs"];
+}
+
+message DeveloperLogs {
+  string stdout = 1;
+  string stderr = 2;
+  string stream = 3;
+  int64 stdout_bytes = 4 [json_name = "stdout_bytes"];
+  int64 stderr_bytes = 5 [json_name = "stderr_bytes"];
+  int64 stream_bytes = 6 [json_name = "stream_bytes"];
+  string runner = 7;
+  bool output_limited = 8 [json_name = "output_limited"];
+  int64 returncode = 9;
+  string signal = 10;
+  double elapsed_seconds = 11 [json_name = "elapsed_seconds"];
+}
+
+message WorkflowRerunPlanEnvelope {
+  WorkflowRerunPlan plan = 1;
+}
+
+message WorkflowRerunPlan {
+  string workflow_id = 1 [json_name = "workflow_id"];
+  string source_execution_id = 2 [json_name = "source_execution_id"];
+  string source_case_id = 3 [json_name = "source_case_id"];
+  string source_branch_id = 4 [json_name = "source_branch_id"];
+  string node_key = 5 [json_name = "node_key"];
+  string source_node_execution_id = 6 [json_name = "source_node_execution_id"];
+  string node_status = 7 [json_name = "node_status"];
+  repeated string available_modes = 8 [json_name = "available_modes"];
+  repeated google.protobuf.Struct overrideable_config_schema = 9 [json_name = "overrideable_config_schema"];
+  map<string, google.protobuf.Value> current_config = 10 [json_name = "current_config"];
+  repeated WorkflowRerunAffectedNode affected_downstream_nodes = 11 [json_name = "affected_downstream_nodes"];
+  WorkflowRerunPlanValidation validation = 12;
+  repeated WorkflowRerunNodeExecutionCandidate candidates = 13;
+  string rerun_contract_hash = 14 [json_name = "rerun_contract_hash"];
+}
+
+message WorkflowRerunAffectedNode {
+  string node_key = 1 [json_name = "node_key"];
+  string node_type = 2 [json_name = "node_type"];
+}
+
+message WorkflowRerunPlanValidation {
+  bool ok = 1;
+  string code = 2;
+  string message = 3;
+  repeated string reasons = 4;
+}
+
+message WorkflowRerunNodeExecutionCandidate {
+  string source_node_execution_id = 1 [json_name = "source_node_execution_id"];
+  string workitem_id = 2 [json_name = "workitem_id"];
+  int32 parallel_index = 3 [json_name = "parallel_index"];
+  string status = 4;
+  string error = 5;
+  int64 duration_ms = 6 [json_name = "duration_ms"];
+  string last_updated_at = 7 [json_name = "last_updated_at"];
+}
+
+message WorkflowRerunEnvelope {
+  WorkflowRerunBranch rerun = 1;
+  string start_error = 2 [json_name = "start_error"];
+  string refresh_error = 3 [json_name = "refresh_error"];
+}
+
+message WorkflowRerunBranchListEnvelope {
+  repeated WorkflowRerunBranch reruns = 1;
+}
+
+message WorkflowRerunBranch {
+  string rerun_id = 1 [json_name = "rerun_id"];
+  string branch_id = 2 [json_name = "branch_id"];
+  string case_id = 3 [json_name = "case_id"];
+  string source_branch_id = 4 [json_name = "source_branch_id"];
+  string new_workflow_execution_id = 5 [json_name = "new_workflow_execution_id"];
+  string source_execution_id = 6 [json_name = "source_execution_id"];
+  string source_case_id = 7 [json_name = "source_case_id"];
+  string node_key = 8 [json_name = "node_key"];
+  string source_node_execution_id = 9 [json_name = "source_node_execution_id"];
+  string mode = 10;
+  string status = 11;
+  string error = 12;
+  string created_at = 13 [json_name = "created_at"];
+  string updated_at = 14 [json_name = "updated_at"];
+}
+
+message CustomOperator {
+  int64 id = 1;
+  string node_id = 2 [json_name = "node_id"];
+  string name = 3;
+  string identifier = 4;
+  string description = 5;
+  int32 language = 6;
+  string handler = 7;
+  string version = 8;
+  string isolation_level = 9 [json_name = "isolation_level"];
+  string source_file_id = 10 [json_name = "source_file_id"];
+  string input_schema = 11 [json_name = "input_schema"];
+  string output_schema = 12 [json_name = "output_schema"];
+  bool enabled = 13;
+  string created_by = 14 [json_name = "created_by"];
+  string updated_by = 15 [json_name = "updated_by"];
+  int64 created_at = 16 [json_name = "created_at"];
+  int64 updated_at = 17 [json_name = "updated_at"];
+  int32 kind = 18;
+  string base_node_id = 19 [json_name = "base_node_id"];
+  string base_node_version = 20 [json_name = "base_node_version"];
+  string binding_config = 21 [json_name = "binding_config"];
+  int64 catalog_id = 22 [json_name = "catalog_id"];
+  int64 database_id = 23 [json_name = "database_id"];
+}
+
+message CustomOperatorListEnvelope {
+  repeated CustomOperator items = 1;
+  int64 total = 2;
+  string next_page_token = 3 [json_name = "next_page_token"];
+}
+
+message CustomOperatorCodeEnvelope {
+  string source = 1;
+}
+
+message CustomOperatorSourceEnvelope {
+  string source = 1;
+  string origin = 2;
+  string node_id = 3 [json_name = "node_id"];
+  string version = 4;
+  string language = 5;
+  string handler = 6;
+  string name = 7;
+  string identifier = 8;
+}
+
+message CustomOperatorTestEnvelope {
+  CustomOperatorTestResult test_run = 1 [json_name = "test_run"];
+}
+
+message CustomOperatorTestResult {
+  int64 operator_id = 1 [json_name = "operator_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string version = 3;
+  string task_id = 4 [json_name = "task_id"];
+  string case_id = 5 [json_name = "case_id"];
+  string status = 6;
+  string case_result = 7 [json_name = "case_result"];
+  string case_error = 8 [json_name = "case_error"];
+  WorkflowExecutionNodeDetailEnvelope node_detail = 9 [json_name = "node_detail"];
+  google.protobuf.Value runtime_input = 10 [json_name = "runtime_input"];
+  google.protobuf.Value runtime_output = 11 [json_name = "runtime_output"];
+  DeveloperLogs developer_logs = 12 [json_name = "developer_logs"];
+  int32 wait_timeout_seconds = 13 [json_name = "wait_timeout_seconds"];
+}
+
+message WorkflowTemplateList {
+  repeated WorkflowTemplate templates = 1;
+}
+
+message WorkflowTemplate {
+  uint64 id = 1;
+  string workspace_id = 2 [json_name = "workspace_id"];
+  string created_by = 3 [json_name = "created_by"];
+  string updated_by = 4 [json_name = "updated_by"];
+  string template_key = 5 [json_name = "template_key"];
+  string name = 6;
+  string description = 7;
+  string language = 8;
+  string dsl_yaml = 9 [json_name = "dsl_yaml"];
+  string input_form = 10 [json_name = "runtime_fields"];
+  bool is_builtin = 11 [json_name = "is_builtin"];
+  google.protobuf.Timestamp created_at = 12 [json_name = "created_at"];
+  google.protobuf.Timestamp updated_at = 13 [json_name = "updated_at"];
+  string definition_format = 14 [json_name = "definition_format"];
+  google.protobuf.Struct workflow = 15;
+}
+
+message WorkflowTemplateDeleteEnvelope {
+  string message = 1;
+}
+
+message LineageWorkflowOverview {
+  string workflow_version_id = 1 [json_name = "workflow_version_id"];
+  string workflow_id = 2 [json_name = "workflow_id"];
+  int32 version = 3;
+  string name = 4;
+  string root_net = 5 [json_name = "root_net"];
+}
+
+message LineageTopologyNode {
+  string node_id = 1 [json_name = "node_id"];
+  string label = 2;
+  string workitem_type_id = 3 [json_name = "workitem_type_id"];
+  string net_id = 4 [json_name = "net_id"];
+  string status = 5;
+  int64 duration_ms = 6 [json_name = "duration_ms"];
+  string error = 7;
+  string selected_run_id = 8 [json_name = "selected_run_id"];
+  string span_id = 9 [json_name = "span_id"];
+  string parent_span_id = 10 [json_name = "parent_span_id"];
+  google.protobuf.Struct metrics = 11;
+}
+
+message LineageTopologyEdge {
+  string source_node_id = 1 [json_name = "source_node_id"];
+  string target_node_id = 2 [json_name = "target_node_id"];
+}
+
+message LineageNodeRunDetail {
+  google.protobuf.Value config = 1;
+  google.protobuf.Value runtime_input = 2 [json_name = "runtime_input"];
+  google.protobuf.Value runtime_vars = 3 [json_name = "runtime_vars"];
+  google.protobuf.Value runtime_output = 4 [json_name = "runtime_output"];
+  string status = 5;
+  string error = 6;
+  int64 duration_ms = 7 [json_name = "duration_ms"];
+}
+
+message LineageArtifactCaseCandidate {
+  string case_id = 1 [json_name = "case_id"];
+  string created_at = 2 [json_name = "created_at"];
+  string status = 3;
+  string role = 4;
+  bool selected = 5;
+}
+
+message LineageArtifactOverview {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string root_asset_id = 2 [json_name = "root_asset_id"];
+  string stage_asset_id = 3 [json_name = "stage_asset_id"];
+  string case_id = 4 [json_name = "case_id"];
+  string workflow_version_id = 5 [json_name = "workflow_version_id"];
+  string raw_file_id = 6 [json_name = "raw_file_id"];
+  string parsed_file_id = 7 [json_name = "parsed_file_id"];
+  bool parsed_file_available = 8 [json_name = "parsed_file_available"];
+  string origin_file_name = 9 [json_name = "origin_file_name"];
+  string origin_file_ext = 10 [json_name = "origin_file_ext"];
+  string selected_by = 11 [json_name = "selected_by"];
+  map<string, string> selection_metadata = 12 [json_name = "selection_metadata"];
+  string recorded_by_workitem_id = 13 [json_name = "recorded_by_workitem_id"];
+  string producer_workitem_id = 14 [json_name = "producer_workitem_id"];
+  string producer_detection_source = 15 [json_name = "producer_detection_source"];
+  repeated LineageArtifactCaseCandidate case_candidates = 16 [json_name = "case_candidates"];
+  // Machine-readable degraded marker: set when the producing execution context
+  // is gone (deleted workflow) while the catalog file stays readable.
+  string source_status = 17 [json_name = "source_status"];
+  string source_unavailable_reason = 18 [json_name = "source_unavailable_reason"];
+}
+
+message LineageWorkflowInvocation {
+  google.protobuf.Value input = 1;
+  google.protobuf.Value vars = 2;
+}
+
+message LineageArtifactTopologyOverview {
+  repeated LineageTopologyNode nodes = 1;
+  repeated LineageTopologyEdge edges = 2;
+  string producer_node_id = 3 [json_name = "producer_node_id"];
+}
+
+message LineageEntry {
+  string catalog_file_id = 1 [json_name = "catalog_file_id"];
+  string volume_id = 2 [json_name = "volume_id"];
+}
+
+message LineageOverview {
+  LineageArtifactOverview artifact = 1;
+  LineageWorkflowOverview workflow = 2;
+  LineageWorkflowInvocation workflow_invocation = 3 [json_name = "workflow_invocation"];
+  LineageArtifactTopologyOverview topology = 4;
+  LineageEntry entry = 5;
+}
+
+message LineageArtifactNodeSnapshot {
+  string node_id = 1 [json_name = "node_id"];
+  string label = 2;
+  string workitem_type_id = 3 [json_name = "workitem_type_id"];
+  string selected_run_id = 4 [json_name = "selected_run_id"];
+  int32 parallel_index = 5 [json_name = "parallel_index"];
+  int32 candidate_runs = 6 [json_name = "candidate_runs"];
+}
+
+message LineageArtifactNode {
+  LineageWorkflowOverview workflow = 1;
+  LineageArtifactNodeSnapshot node = 2;
+  LineageNodeRunDetail run = 3;
+}
+
+message LineageOutputBlocks {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string node_execution_id = 3 [json_name = "node_execution_id"];
+  string output_artifact_id = 4 [json_name = "output_artifact_id"];
+  repeated google.protobuf.Value blocks = 5;
+}
+
+message LineageBlockRevisions {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string node_execution_id = 3 [json_name = "node_execution_id"];
+  string output_artifact_id = 4 [json_name = "output_artifact_id"];
+  string block_id = 5 [json_name = "block_id"];
+  repeated google.protobuf.Value revisions = 6;
+}
+
+message LineageBlockRevision {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string node_execution_id = 3 [json_name = "node_execution_id"];
+  string output_artifact_id = 4 [json_name = "output_artifact_id"];
+  string block_id = 5 [json_name = "block_id"];
+  google.protobuf.Value revision = 6;
+}
+
+message LineageEffectiveRevisions {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string node_execution_id = 3 [json_name = "node_execution_id"];
+  string output_artifact_id = 4 [json_name = "output_artifact_id"];
+  int64 effective_set_version = 5 [json_name = "effective_set_version"];
+}
+
+message LineageRerun {
+  string artifact_id = 1 [json_name = "artifact_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string node_execution_id = 3 [json_name = "node_execution_id"];
+  string rerun_id = 4 [json_name = "rerun_id"];
+  string branch_id = 5 [json_name = "branch_id"];
+  string case_id = 6 [json_name = "case_id"];
+  string status = 7;
+}
+
+message WorkitemCatalogList {
+  repeated WorkitemCatalogItem items = 1;
+  int32 total = 2;
+}
+
+message WorkitemCatalogItem {
+  string node_id = 1 [json_name = "node_id"];
+  string display_name = 2 [json_name = "display_name"];
+  string short_description = 3 [json_name = "short_description"];
+  string category = 4;
+  repeated string tags = 5;
+  string source = 6;
+  string provider = 7;
+  string preferred_version = 8 [json_name = "preferred_version"];
+  string visibility = 9;
+  bool stream = 10;
+}
+
+message WorkitemCatalogDetail {
+  google.protobuf.Struct item = 1;
+}
+
+message WorkitemAPIServiceEnvelope {
+  WorkitemAPIService service = 1;
+}
+
+message WorkitemAPIService {
+  int64 operator_id = 1 [json_name = "operator_id"];
+  string node_id = 2 [json_name = "node_id"];
+  string version = 3;
+  string service_name = 4 [json_name = "service_name"];
+  string status = 5;
+  string workflow_id = 6 [json_name = "workflow_id"];
+  string workflow_def_id = 7 [json_name = "workflow_def_id"];
+  string workflow_version_id = 8 [json_name = "workflow_version_id"];
+  string result_mode = 9 [json_name = "result_mode"];
+  string auth_mode = 10 [json_name = "auth_mode"];
+  string method = 11;
+  string path = 12;
+  string input_schema = 13 [json_name = "input_schema"];
+  string output_schema = 14 [json_name = "output_schema"];
+  string compute_resource_id = 15 [json_name = "compute_resource_id"];
+  int32 timeout_seconds = 16 [json_name = "timeout_seconds"];
+  int32 max_concurrency = 17 [json_name = "max_concurrency"];
+  int32 rate_limit_per_min = 18 [json_name = "rate_limit_per_min"];
+  WorkitemAPIServiceInvokeInfo invoke = 19;
+  google.protobuf.Struct deployment = 20;
+  // Stable IAM identity for the published API Service.
+  string api_service_id = 21 [json_name = "api_service_id"];
+}
+
+message WorkitemAPIServiceInvokeInfo {
+  string method = 1;
+  string path = 2;
+  string result_mode = 3 [json_name = "result_mode"];
+  google.protobuf.Struct body_example = 4 [json_name = "body_example"];
+}
+
+message WorkitemAPIServiceInvokeEnvelope {
+  WorkitemAPIServiceInvokeResult result = 1;
+}
+
+message WorkitemAPIServiceInvokeResult {
+  string case_id = 1 [json_name = "case_id"];
+  string status = 2;
+  google.protobuf.Value result = 3;
+  string error = 4;
+}
+
+message WorkflowHistoryEntry {
+  string id = 1;
+  WorkflowCandidateRef candidate_ref = 2 [json_name = "candidate_ref"];
+  WorkflowCandidateBundle candidate = 3;
+  string status = 4;
+  string created_at = 5 [json_name = "created_at"];
+  string decided_at = 6 [json_name = "decided_at"];
+}
+
+message WorkflowHistoryPage {
+  repeated WorkflowHistoryEntry items = 1;
+  int32 total_tasks = 2 [json_name = "total_tasks"];
+  int32 limit = 3;
+  int32 offset = 4;
+  WorkflowCandidateAcceptance current = 5;
+  WorkflowRuntimeFormRevisionRef saved_workflow = 6 [json_name = "saved_workflow"];
+}
+
+message WorkflowHistoryRestoreRequest {
+  string context_id = 1 [json_name = "context_id"];
+  string request_id = 2 [json_name = "request_id"];
+  WorkflowCandidateRef candidate_ref = 3 [json_name = "candidate_ref"];
+  WorkflowCandidateRef parent_ref = 4 [json_name = "parent_ref"];
+}
+
+message WorkflowRuntimeFormRevisionRef {
+  string kind = 1;
+  WorkflowCandidateRef candidate_ref = 2 [json_name = "candidate_ref"];
+  string workflow_id = 3 [json_name = "workflow_id"];
+  string workflow_version_id = 4 [json_name = "workflow_version_id"];
+}
+
+message WorkflowRuntimeValues {
+  bool ok = 1;
+  string code = 2;
+  string message = 3;
+  string artifact_id = 4 [json_name = "artifact_id"];
+  WorkflowRuntimeFormRevisionRef runtime_form_revision_ref = 5 [json_name = "runtime_form_revision_ref"];
+  google.protobuf.Struct runtime_fields = 6 [json_name = "runtime_fields"];
+  google.protobuf.Struct before_values = 7 [json_name = "before_values"];
+  google.protobuf.Struct submitted_values = 8 [json_name = "submitted_values"];
+  repeated string updated_field_ids = 9 [json_name = "updated_field_ids"];
+  repeated string unknown_field_ids = 10 [json_name = "unknown_field_ids"];
+  WorkflowCandidateRef restored_from = 11 [json_name = "restored_from"];
+  string revision_id = 12 [json_name = "revision_id"];
+}
+
+message WorkflowAuthoringScope {string workspace_id=1;string user_id=2;string locale=3;string task_id=4;string context_id=5;}
+message WorkflowCandidateSubmitRequest {WorkflowAuthoringScope scope=1;string summary=2;string source=3;string catalog_revision=4;WorkflowCandidateIntent intent=5;string test_status=6;google.protobuf.Struct test_result=7;map<string, bytes> project_files=8;}
+message WorkflowScratchScope {string workspace_id=1;string task_id=2;string user_id=3;string effective_role_id=4;string context_id=5;int64 catalog_id=6;}
+message WorkflowScratchLease {string workspace_id=1;string task_id=2;string user_id=3;string effective_role_id=4;string context_id=5;string operation_id=6;int64 catalog_id=7;string database_name=8;int64 database_id=9;int64 input_volume_id=10;int64 output_volume_id=11;string state=12;}
+message WorkflowScratchObservation {string scope=1;string database_name=2;repeated google.protobuf.Struct volumes=3;repeated google.protobuf.Struct tables=4;}
+message WorkflowScratchResetResult {string state=1;}
+message WorkflowCandidateTestRequest {google.protobuf.Value request=1;WorkflowScratchScope scratch=2;string verification_source=3;string cases_dir=4;string case=5;google.protobuf.Value workflow=6;bool verification_only=7;google.protobuf.Value runtime_fields=8;string task_id=9;string effective_role_id=10;string context_id=11;int64 catalog_id=12;google.protobuf.Value custom_operators=13;map<string, bytes> project_files=14;}
+message WorkflowCandidateTestWorkItem {string id=1;int32 parallel_index=2;string node=3;string data=4;string status=5;string result=6;string error=7;string created_at=8;string updated_at=9;}
+message WorkflowCandidateTestReport {string status=1;string case_id=2;google.protobuf.Value result=3;google.protobuf.Struct execution_coverage=4;repeated WorkflowCandidateTestWorkItem workitems=5;google.protobuf.Struct scratch=6;repeated string external_effect_node_ids=7;google.protobuf.Struct verification=8;google.protobuf.Struct fault=9;string error=10;}
+
+// Version management preserves the existing PascalCase JSON response contract.
+message WorkflowVersion {
+  string id = 1 [json_name = "ID"];
+  string workspace_id = 2 [json_name = "WorkspaceID"];
+  string user_id = 3 [json_name = "UserID"];
+  string workflow_definition_id = 4 [json_name = "WorkflowDefinitionID"];
+  int32 version = 5 [json_name = "Version"];
+  string workflow_json = 6 [json_name = "WorkflowJSON"];
+  string status = 7 [json_name = "Status"];
+  string created_by = 8 [json_name = "CreatedBy"];
+  string created_at = 9 [json_name = "CreatedAt"];
+  string published_at = 10 [json_name = "PublishedAt"];
+  int32 type = 11 [json_name = "Type"];
+  string input_schema = 12 [json_name = "InputSchema"];
+  string output_schema = 13 [json_name = "OutputSchema"];
+  int32 result_mode = 14 [json_name = "ResultMode"];
+  string description = 15 [json_name = "Description"];
+  string runtime_spec_json = 16 [json_name = "RuntimeSpecJSON"];
+}
+message WorkflowVersionList { repeated WorkflowVersion items = 1; }
+message WorkflowVersionCreateRequest { string workflow = 1; string description = 2; }

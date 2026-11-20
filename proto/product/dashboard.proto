@@ -1,0 +1,197 @@
+syntax = "proto3";
+package matrixflow.sdk.product;
+import "google/protobuf/struct.proto";
+import "product/sql.proto";
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message TaskExecutionOverviewResult {
+  int64 running = 1;
+  int64 success = 2;
+  int64 failed = 3;
+  int64 pending = 4;
+  int64 total = 5;
+  int32 window_days = 6 [json_name = "window_days"];
+  string since = 7;
+  string until = 8;
+}
+
+message DataDashboardSourceInput {
+  int64 table_id = 1 [json_name = "table_id"];
+}
+
+message DataDashboardMutationRequest {
+  string name = 1 [json_name = "name"];
+  string description = 2 [json_name = "description"];
+  repeated DataDashboardSourceInput sources = 3 [json_name = "sources"];
+}
+
+message DataDashboardListRequest {
+  string search = 1 [json_name = "search"];
+  int32 page_size = 2 [json_name = "page_size"];
+  string page_token = 3 [json_name = "page_token"];
+}
+
+message DataDashboardChartMutationRequest {
+  string name = 1 [json_name = "name"];
+  string chart_type = 2 [json_name = "chart_type"];
+  string sql_text = 3 [json_name = "sql_text"];
+  string chart_config = 4 [json_name = "chart_config"];
+  string layout_config = 5 [json_name = "layout_config"];
+  string refresh_interval = 6 [json_name = "refresh_interval"];
+  bool alert_enabled = 7 [json_name = "alert_enabled"];
+  string alert_config = 8 [json_name = "alert_config"];
+}
+
+message DataDashboardDrillThroughDimension {
+  string role = 1 [json_name = "role"];
+  google.protobuf.Value value = 2 [json_name = "value"];
+}
+
+message DataDashboardDrillThroughRequest {
+  repeated DataDashboardDrillThroughDimension dimensions = 1 [json_name = "dimensions"];
+}
+
+message DataDashboardChartOrderRequest {
+  repeated string chart_ids = 1 [json_name = "chart_ids"];
+}
+
+message DataDashboardListResult {
+  repeated DataDashboard items = 1 [json_name = "items"];
+  int64 total = 2 [json_name = "total"];
+  bool has_more = 3 [json_name = "has_more"];
+  string next_page_token = 4 [json_name = "next_page_token"];
+}
+
+message DataDashboardMutationResult {
+  bool updated = 1 [json_name = "updated"];
+  bool deleted = 2 [json_name = "deleted"];
+}
+
+message DataDashboardGeneratedSQLResult {
+  string sql_text = 1 [json_name = "sql_text"];
+  string chart_type = 2 [json_name = "chart_type"];
+}
+
+message DataDashboardChartRun {
+  string chart_id = 1 [json_name = "chart_id"];
+  string execution_id = 2 [json_name = "execution_id"];
+  string status = 3 [json_name = "status"];
+  string error = 4 [json_name = "error"];
+}
+
+message DataDashboardChartRuns {
+  repeated DataDashboardChartRun runs = 1 [json_name = "runs"];
+}
+
+message DataDashboardChartExecution {
+  string execution_id = 1 [json_name = "execution_id"];
+  string status = 2 [json_name = "status"];
+  string error = 3 [json_name = "error"];
+  string mode = 4 [json_name = "mode"];
+  string requested_at = 5 [json_name = "requested_at"];
+  string refreshed_at = 6 [json_name = "refreshed_at"];
+  SQLQueryResult result = 7 [json_name = "result"];
+}
+
+message DataDashboardDrillThroughResult {
+  repeated SQLQueryResultColumn columns = 1 [json_name = "columns"];
+  repeated google.protobuf.ListValue rows = 2 [json_name = "rows"];
+  int32 preview_limit = 3 [json_name = "preview_limit"];
+  int64 visible_total = 4 [json_name = "visible_total"];
+  bool truncated = 5 [json_name = "truncated"];
+  string sql_text = 6 [json_name = "sql_text"];
+  string database = 7 [json_name = "database"];
+}
+
+message DataDashboard {
+  string id = 1 [json_name = "ID"];
+  string name = 2 [json_name = "Name"];
+  string description = 3 [json_name = "Description"];
+  string created_by_role_id = 4 [json_name = "CreatedByRoleID"];
+  string created_at = 5 [json_name = "CreatedAt"];
+  string updated_at = 6 [json_name = "UpdatedAt"];
+  repeated DataDashboardSource sources = 7 [json_name = "sources"];
+  repeated DataDashboardChart charts = 8 [json_name = "charts"];
+  repeated DataDashboardAlert alerts = 9 [json_name = "alerts"];
+  int64 active_alert_count = 10 [json_name = "active_alert_count"];
+  string lifecycle_status = 11 [json_name = "LifecycleStatus"];
+}
+
+message DataDashboardSource {
+  string id = 1 [json_name = "ID"];
+  string dashboard_id = 2 [json_name = "DashboardID"];
+  int64 table_id = 3 [json_name = "TableID"];
+  string database_name = 4 [json_name = "DatabaseName"];
+  string table_name = 5 [json_name = "TableName"];
+  string status = 6 [json_name = "Status"];
+  repeated DataDashboardChartSummary affected_charts = 7 [json_name = "AffectedCharts"];
+}
+
+message DataDashboardChartSummary {
+  string id = 1 [json_name = "ID"];
+  string name = 2 [json_name = "Name"];
+}
+
+message DataDashboardChart {
+  string id = 1 [json_name = "ID"];
+  string dashboard_id = 2 [json_name = "DashboardID"];
+  string name = 3 [json_name = "Name"];
+  string chart_type = 4 [json_name = "ChartType"];
+  string sql_text = 5 [json_name = "SQLText"];
+  string database_name = 6 [json_name = "DatabaseName"];
+  string chart_config = 7 [json_name = "ChartConfig"];
+  string layout_config = 8 [json_name = "LayoutConfig"];
+  string refresh_interval = 9 [json_name = "RefreshInterval"];
+  string scheduler_task_id = 10 [json_name = "SchedulerTaskID"];
+  int64 schedule_version = 11 [json_name = "ScheduleVersion"];
+  string schedule_status = 12 [json_name = "ScheduleStatus"];
+  string schedule_error = 13 [json_name = "ScheduleError"];
+  bool alert_enabled = 14 [json_name = "AlertEnabled"];
+  string alert_config = 15 [json_name = "AlertConfig"];
+  string snapshot_epoch_at = 16 [json_name = "SnapshotEpochAt"];
+  string created_at = 17 [json_name = "CreatedAt"];
+  string updated_at = 18 [json_name = "UpdatedAt"];
+}
+
+message DataDashboardAlert {
+  string id = 1 [json_name = "ID"];
+  string dashboard_id = 2 [json_name = "DashboardID"];
+  string chart_id = 3 [json_name = "ChartID"];
+  string chart_name = 4 [json_name = "ChartName"];
+  string field_name = 5 [json_name = "FieldName"];
+  string x_field_name = 6 [json_name = "XFieldName"];
+  string operator = 7 [json_name = "Operator"];
+  double threshold = 8 [json_name = "Threshold"];
+  string x_value = 9 [json_name = "XValue"];
+  double trigger_value = 10 [json_name = "TriggerValue"];
+  string level = 11 [json_name = "Level"];
+  string status = 12 [json_name = "Status"];
+  string occurred_at = 13 [json_name = "OccurredAt"];
+  string last_notified_at = 14 [json_name = "LastNotifiedAt"];
+}
+
+// 看板 WebSocket 与既有 HTTP 预览和图表数据共用负载合同。
+message DataDashboardWebSocketMessage {
+  enum Type {
+    unknown = 0;
+    ping = 1;
+    pong = 2;
+    preclose = 3;
+    dashboard_preview_execute = 4;
+    dashboard_preview_result = 5;
+    dashboard_chart_create = 6;
+    dashboard_chart_create_result = 7;
+    dashboard_chart_update = 8;
+    dashboard_chart_update_result = 9;
+    error = 10;
+  }
+  string id = 1;
+  Type message_type = 2;
+  google.protobuf.Struct data = 3;
+}
+
+message DataDashboardWebSocketError {
+  int32 status = 1;
+  string code = 2;
+  string msg = 3;
+}

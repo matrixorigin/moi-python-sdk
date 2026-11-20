@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message ProviderEndpoint {
+  int64 id = 1;
+  int64 backend_id = 2 [json_name = "backend_id"];
+  string address = 3;
+  string status = 4;
+  int64 created_at = 5 [json_name = "created_at"];
+  int64 updated_at = 6 [json_name = "updated_at"];
+}
+
+message ProviderBackend {
+  int64 id = 1;
+  string name = 2;
+  string type = 3;
+  string reasoning_control_protocol = 4 [json_name = "reasoning_control_protocol"];
+  int32 timeout_seconds = 5 [json_name = "timeout_seconds"];
+  repeated string models = 6;
+  repeated string supported_mime_types = 7 [json_name = "supported_mime_types"];
+  repeated ProviderEndpoint endpoints = 8;
+  int64 created_at = 9 [json_name = "created_at"];
+  int64 updated_at = 10 [json_name = "updated_at"];
+}
+
+message ProviderBackendListResult {
+  repeated ProviderBackend backends = 1;
+}
+
+message ProviderEndpointListResult {
+  repeated ProviderEndpoint endpoints = 1;
+}
+
+message ProviderRouterConfig {
+  string strategy = 1;
+  int32 health_check_interval = 2 [json_name = "health_check_interval"];
+  int32 max_retries = 3 [json_name = "max_retries"];
+  bool session_affinity = 4 [json_name = "session_affinity"];
+}
+
+message ProviderModel {
+  string model = 1;
+  int64 backend_id = 2 [json_name = "backend_id"];
+  string backend_name = 3 [json_name = "backend_name"];
+  string model_type = 4 [json_name = "model_type"];
+  string source = 5;
+  bool system_default = 6 [json_name = "system_default"];
+  int32 dim = 7;
+  // Optional TaaS Embedding subtype (embedding_text / embedding_multimodal).
+  // Omitted when no authoritative subtype is available.
+  string type = 8;
+  // Reasoning efforts the model accepts, mirrored from the TaaS catalog by
+  // the model list API ("none" / "low" / "medium" / "high" / "max").
+  // Omitted when the catalog does not declare them.
+  repeated string reasoning_efforts = 9 [json_name = "reasoning_efforts"];
+}
+
+message ProviderModelListResult {
+  repeated ProviderModel models = 1;
+}
+
+message ProviderProbeModelsResult {
+  repeated string models = 1;
+}
+
+message ProviderSetupBackendResult {
+  ProviderBackend backend = 1;
+  ProviderEndpoint endpoint = 2;
+}
+
+message ProviderMutationResult {
+  bool success = 1;
+}
+
+message WorkspaceLLMBackend {int64 id=1;string name=2;int32 type=3;string api_key_encrypted=4;int32 timeout_seconds=5;repeated string models=6;int64 created_at=7;int64 updated_at=8;int32 reasoning_control_protocol=9;string provider_origin=10;string origin_ref=11;string origin_version=12;}
+message WorkspaceLLMBackendCreateRequest {string name=1;int32 type=2;string api_key_encrypted=3;int32 timeout_seconds=4;repeated string models=5;int32 reasoning_control_protocol=6;string provider_origin=7;string origin_ref=8;string origin_version=9;}
+message WorkspaceLLMBackendUpdateRequest {string name=1;string api_key_encrypted=2;int32 timeout_seconds=3;repeated string models=4;optional int32 reasoning_control_protocol=5;optional string provider_origin=6;optional string origin_ref=7;optional string origin_version=8;}
+message WorkspaceLLMBackendList {repeated WorkspaceLLMBackend backends=1;int64 total=2;}
+message WorkspaceLLMEndpoint {int64 id=1;int64 backend_id=2;string address=3;int32 status=4;int64 created_at=5;int64 updated_at=6;}
+message WorkspaceLLMRouterConfig {int64 id=1;int32 strategy=2;int32 health_check_interval_seconds=3;int32 max_retries=4;bool enable_session_affinity=5;int64 created_at=6;int64 updated_at=7;}
+message WorkspaceLLMRouterConfigResult {WorkspaceLLMRouterConfig config=1;}
+message WorkspaceLLMRouterUpdateRequest {int32 strategy=1;int32 health_check_interval_seconds=2;int32 max_retries=3;bool enable_session_affinity=4;}
+message WorkspaceChatCompletionProxy {string mock_response=1;}
+message WorkspaceChatCompletionRequest {string model=1;repeated google.protobuf.Struct messages=2;double temperature=3;double top_p=4;int32 max_tokens=5;repeated google.protobuf.Value tools=6;google.protobuf.Value tool_choice=7;WorkspaceChatCompletionProxy proxy=8;optional int64 backend_id=9 [json_name="backend_id"];}
+
+message WorkspaceEndpointMutationResult { bool updated = 1; }
