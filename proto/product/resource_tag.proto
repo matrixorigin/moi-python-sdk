@@ -1,0 +1,109 @@
+syntax = "proto3";
+package matrixflow.sdk.product;
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+import "google/protobuf/struct.proto";
+import "product/workflow.proto";
+
+message ResourceTag {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+  string description = 4;
+  string created_at = 5 [json_name = "created_at"];
+  string updated_at = 6 [json_name = "updated_at"];
+}
+message ResourceTagValue {
+  string id = 1;
+  string tag_id = 2 [json_name = "tag_id"];
+  string value = 3;
+  string created_at = 4 [json_name = "created_at"];
+  string updated_at = 5 [json_name = "updated_at"];
+}
+message ResourceTagList {
+  repeated ResourceTag items = 1;
+  int64 total = 2;
+}
+message ResourceTagValueList {
+  repeated ResourceTagValue items = 1;
+  int64 total = 2;
+}
+message ResourceTagCreateRequest {
+  string type = 1;
+  string name = 2;
+  string description = 3;
+  repeated string values = 4;
+}
+message ResourceTagUpdateRequest {
+  optional string name = 1;
+  optional string description = 2;
+}
+message ResourceTagValueRequest { string value = 1; }
+message ResourceTagListRequest {
+  string type = 1;
+  string name_search = 2 [json_name = "name_search"];
+  string value_search = 3 [json_name = "value_search"];
+  int32 offset = 4;
+  int32 limit = 5;
+  string resource_id = 6 [json_name = "resource_id"];
+}
+message ResourceTagFilter {
+  string tag_id = 1 [json_name = "tag_id"];
+  // A string selects an existing value; explicit null selects unassigned objects.
+  google.protobuf.Value value_id = 2 [json_name = "value_id"];
+}
+message ResourceTagQueryRequest {
+  string type = 1;
+  string group_by = 2 [json_name = "group_by"];
+  repeated ResourceTagFilter filters = 3;
+  string name_search = 4 [json_name = "name_search"];
+  string status = 5;
+  string execution_mode = 6 [json_name = "execution_mode"];
+  bool include_dynamic_service = 7 [json_name = "include_dynamic_service"];
+  int32 offset = 8;
+  int32 limit = 9;
+}
+message ResourceTagSet {
+  string tag_id = 1 [json_name = "tag_id"];
+  string value_id = 2 [json_name = "value_id"];
+  string resource_id = 3 [json_name = "resource_id"];
+}
+message ResourceTagRemove {
+  string tag_id = 1 [json_name = "tag_id"];
+  string resource_id = 2 [json_name = "resource_id"];
+}
+message ResourceTagRelationsRequest {
+  string type = 1;
+  repeated ResourceTagSet set = 2;
+  repeated ResourceTagRemove remove = 3;
+}
+message ResourceTagGroup {
+  optional string value_id = 1 [json_name = "value_id"];
+  optional string value = 2;
+  int64 resource_count = 3 [json_name = "resource_count"];
+}
+message ResourceTagGroupList {
+  ResourceTag tag = 1;
+  repeated ResourceTagGroup items = 2;
+  int64 total = 3;
+}
+message ResourceTagResourceList {
+  repeated WorkflowListItem items = 1;
+  int64 total = 2;
+}
+message ResourceTagAssignmentsRequest {
+  string type = 1;
+  repeated string resource_ids = 2 [json_name = "resource_ids"];
+  repeated string tag_ids = 3 [json_name = "tag_ids"];
+}
+message ResourceTagAssignment {
+  string tag_id = 1 [json_name = "tag_id"];
+  string tag_name = 2 [json_name = "tag_name"];
+  string value_id = 3 [json_name = "value_id"];
+  string value = 4;
+}
+message ResourceTagResourceAssignments {
+  string resource_id = 1 [json_name = "resource_id"];
+  repeated ResourceTagAssignment tags = 2;
+}
+message ResourceTagAssignmentsList { repeated ResourceTagResourceAssignments items = 1; }

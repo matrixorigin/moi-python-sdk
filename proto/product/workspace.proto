@@ -1,0 +1,203 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message Workspace {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  string owner_id = 4;
+  string created_at = 5;
+  string access_status = 6;
+  string invitation_id = 7;
+  string owner_name = 8;
+  string owner_email = 9;
+}
+
+message WorkspaceListResult {
+  repeated Workspace workspaces = 1;
+  int32 total = 2;
+}
+
+message WorkspaceCreateResult {
+  string id = 1;
+}
+
+message WorkspaceClaimResult {
+  string workspace_id = 1;
+  bool claimed = 2;
+  bool already_claimed = 3;
+}
+
+message WorkspaceMemberRole {
+  int64 id = 1;
+  string name = 2;
+  string status = 3;
+}
+
+message WorkspaceMemberTag {
+  int64 id = 1;
+  string value = 2;
+}
+
+// Deletion status for a system member retained until tenant cleanup completes.
+message WorkspaceMemberDeletion {
+  // pending does not confirm failure; failed permits an authorized manual retry.
+  string state = 1;
+  string phase = 2;
+  string code = 3;
+  // Safe localized message supplied by the backend; never a raw storage error.
+  string message = 4;
+  // Preserve this request ID when continuing the same deletion.
+  string request_id = 5 [json_name = "request_id"];
+  string trace_id = 6 [json_name = "trace_id"];
+  string updated_at = 7 [json_name = "updated_at"];
+}
+
+message WorkspaceMember {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  // enabled, disabled, pending, or deletion_incomplete (retained during deletion).
+  string status = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  bool reserved = 7;
+  repeated WorkspaceMemberRole role_list = 8;
+  repeated WorkspaceMemberTag tag_list = 9;
+  string iam_user_id = 10 [json_name = "iam_user_id"];
+  string github_login = 11 [json_name = "github_login"];
+  repeated string allowed_actions = 12 [json_name = "allowed_actions"];
+  // Present only for deletion_incomplete rows in the member management list.
+  WorkspaceMemberDeletion deletion = 13;
+}
+
+message WorkspaceMemberInviteResult {
+  string id = 1;
+}
+
+message WorkspaceInvitationAcceptResult {
+  bool accepted = 1;
+}
+
+message WorkspaceMemberListResult {
+  int32 total = 1;
+  repeated WorkspaceMember user_list = 2;
+}
+
+message CurrentWorkspaceMember {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  bool reserved = 4;
+}
+
+message WorkspaceIAMRoleOption {
+  string role_id = 1;
+  string role_name = 2;
+  string lifecycle_state = 3;
+  int64 lifecycle_version = 4;
+  bool system_role = 5;
+  bool selectable = 6;
+  string disabled_reason = 7;
+}
+
+message WorkspaceIAMPrincipalContext {
+  repeated WorkspaceIAMRoleOption roles = 1;
+  string default_role_id = 2;
+  int64 default_role_version = 3;
+  string explicit_role_id = 4;
+  string effective_role_id = 5;
+  string role_context_status = 6;
+  string schema_version = 7;
+  string capability_version = 8;
+  string request_id = 9;
+  string trace_id = 10;
+}
+
+message WorkspaceIAMCapability {
+  string capability_id = 1;
+  string action_id = 2;
+  string resource_type = 3;
+  string reason_code = 4;
+  bool allowed = 5;
+  bool all_resources = 6;
+  repeated string resource_ids = 7;
+}
+
+message WorkspaceIAMCapabilities {
+  string effective_role_id = 1;
+  string capability_version = 2;
+  string request_id = 3;
+  string trace_id = 4;
+  repeated WorkspaceIAMCapability items = 5;
+  repeated string unsupported_capability_ids = 6;
+}
+
+// Compact /user/info projection. Field numbers retain the original nested wire contract.
+message WorkspaceIAMBootstrapRoleOption {
+  reserved 3, 5;
+  reserved "lifecycle_state", "system_role";
+  string role_id = 1;
+  string role_name = 2;
+  int64 lifecycle_version = 4;
+  bool selectable = 6;
+  string disabled_reason = 7;
+}
+
+message WorkspaceIAMBootstrapPrincipalContext {
+  reserved 7 to 10;
+  reserved "schema_version", "capability_version", "request_id", "trace_id";
+  repeated WorkspaceIAMBootstrapRoleOption roles = 1;
+  string default_role_id = 2;
+  int64 default_role_version = 3;
+  string explicit_role_id = 4;
+  string effective_role_id = 5;
+  string role_context_status = 6;
+}
+
+message WorkspaceIAMBootstrapCapability {
+  reserved 2, 3;
+  reserved "action_id", "resource_type";
+  string capability_id = 1;
+  string reason_code = 4;
+  bool allowed = 5;
+  bool all_resources = 6;
+  repeated string resource_ids = 7;
+}
+
+message WorkspaceIAMBootstrapCapabilities {
+  reserved 2;
+  reserved "capability_version";
+  string effective_role_id = 1;
+  string request_id = 3;
+  string trace_id = 4;
+  repeated WorkspaceIAMBootstrapCapability items = 5;
+}
+
+message CurrentWorkspacePrincipalResult {
+  string user = 1;
+  string role = 2;
+  bool is_admin = 3;
+  CurrentWorkspaceMember user_info = 4;
+  WorkspaceIAMBootstrapPrincipalContext iam_context = 5;
+  WorkspaceIAMBootstrapCapabilities iam_capabilities = 6;
+  string iam_snapshot_version = 7;
+}
+
+message WorkspaceCreationJob {
+  string id = 1;
+  string name = 2;
+  string status = 3;
+  string workspace_id = 4;
+  string error_code = 5;
+  string error_reason = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string request_id = 9;
+}
+message WorkspaceCreationsResult {
+  repeated WorkspaceCreationJob creations = 1;
+}

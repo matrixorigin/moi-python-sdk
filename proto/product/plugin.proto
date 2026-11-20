@@ -1,0 +1,201 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+import "google/protobuf/struct.proto";
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+// Product control-plane projections. Secrets and internal authorization attempts
+// are deliberately absent; credential submission is a separate request type.
+message PluginPublication {
+  string id = 1;
+  string workspace_id = 2;
+  string registry = 3;
+  string publisher = 4;
+  string name = 5;
+  string version = 6;
+  string digest = 7;
+  string description = 8;
+  string published_by = 9;
+  string created_at = 10;
+  string display_name = 11;
+  string display_description = 12;
+}
+message PluginPublicationList {
+  repeated PluginPublication items = 1;
+  int64 total = 2;
+}
+message PluginCapability {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string kind = 4;
+  string side_effect = 5;
+  string digest = 6;
+}
+message PluginCapabilityCandidate {
+  PluginCapability capability = 1;
+  string capability_ref = 2;
+}
+message PluginDiscoveryCandidate {
+  string source = 1;
+  PluginPublication release = 2;
+  string installation_id = 3;
+  int64 installation_version = 4;
+  repeated PluginCapabilityCandidate capabilities = 5;
+  bool capabilities_truncated = 6;
+}
+message PluginDiscoveryPage {
+  repeated PluginDiscoveryCandidate candidates = 1;
+  string next_cursor = 2;
+  bool has_more = 3;
+}
+message PluginRequirementBinding {
+  string requirement = 1;
+  repeated string profiles = 2;
+}
+message PluginMCPServer {
+  string type = 1;
+  string url = 2;
+  string command = 3;
+  repeated string args = 4;
+  map<string, string> headers = 5;
+}
+message PluginCapabilityDescriptor {
+  PluginCapability capability = 1;
+  string capability_ref = 2;
+  google.protobuf.Struct input_schema = 3;
+  string skill_path = 4;
+  PluginMCPServer mcp_server = 5;
+  repeated PluginRequirementBinding connections = 6;
+}
+message PluginRelease {
+  PluginPublication publication = 1;
+  // Package documents are extensible contracts, not SDK-owned business models.
+  google.protobuf.Struct manifest = 2;
+  google.protobuf.Struct connections = 3;
+  map<string, PluginMCPServer> servers = 4;
+  google.protobuf.Struct operations = 5;
+  repeated PluginSkill skills = 6;
+  map<string, PluginProfileDigests> profile_digests = 7;
+}
+message PluginProfileDigests { map<string, string> profiles = 1; }
+message PluginSkill {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string path = 4;
+  string digest = 5;
+}
+message PluginInstallationBinding {
+  string connection_id = 1;
+  string profile = 2;
+  string executor_id = 3;
+}
+message PluginInstallation {
+  string id = 1;
+  string workspace_id = 2;
+  string release_workspace_id = 3;
+  string release_id = 4;
+  string release_digest = 5;
+  string release_name = 6;
+  string owner_user_id = 7;
+  map<string, PluginInstallationBinding> bindings = 8;
+  int64 version = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+message PluginInstallationList {
+  repeated PluginInstallation items = 1;
+  int64 total = 2;
+}
+message PluginConnection {
+  string id = 1;
+  string workspace_id = 2;
+  string name = 3;
+  string description = 4;
+  string status = 5;
+  string kind = 6;
+  string endpoint_uri = 7;
+  string auth_type = 8;
+  string credential_ref = 9;
+  repeated string capabilities = 10;
+  string owner_user_id = 11;
+  string visibility = 12;
+  google.protobuf.Struct config = 13;
+  string last_test_status = 14;
+  string last_tested_at = 15;
+  string last_test_error = 16;
+  int32 version = 17;
+  map<string, string> labels = 18;
+  map<string, string> annotations = 19;
+  google.protobuf.Struct metadata = 20;
+  string created_by = 21;
+  string updated_by = 22;
+  string created_at = 23;
+  string updated_at = 24;
+}
+message PluginConnectionList {
+  repeated PluginConnection items = 1;
+  int64 total = 2;
+}
+message PluginAuthorizationStatus {
+  string workspace_id = 1;
+  string connection_id = 2;
+  string external_subject = 3;
+  string status = 4;
+  int64 generation = 5;
+  int64 revision = 6;
+  int32 connection_version = 7;
+  string remote_revocation_status = 8;
+  string remote_revocation_reason = 9;
+  int64 remote_revocation_generation = 10;
+  // Provider account name for display only; never an authorization identifier.
+  string account_display_name = 11;
+  // Current managed login; resume through PollPluginOAuth, never start a second login.
+  string attempt_id = 12;
+}
+message PluginOAuthAction {
+  string attempt_id = 1;
+  string grant = 2;
+  string authorization_url = 3;
+  string user_code = 4;
+  int32 poll_after = 5;
+  string expires_at = 6;
+}
+message PluginOAuthProgress {
+  string attempt_id = 1;
+  string status = 2;
+  string reason = 3;
+  int32 poll_after = 4;
+  PluginOAuthAction next_action = 5;
+}
+message PluginMutationResult { string status = 1; }
+message PluginInstallRequest {
+  string release_namespace = 1;
+  string release_id = 2;
+  map<string, PluginInstallationBinding> bindings = 3;
+  string setup_operation_id = 4;
+}
+message PluginUpdateInstallationRequest {
+  int64 expected_version = 1;
+  string release_namespace = 2;
+  string release_id = 3;
+  map<string, PluginInstallationBinding> bindings = 4;
+  string setup_operation_id = 5;
+}
+message PluginCreateConnectionRequest {
+  string release_namespace = 1;
+  string release_id = 2;
+  string requirement = 3;
+  string profile = 4;
+  string executor_id = 5;
+  string name = 6;
+}
+message PluginUpdateConnectionRequest {
+  int32 expected_version = 1;
+  string status = 2;
+}
+message PluginStoreSecretRequest {
+  int32 expected_version = 1;
+  map<string, string> fields = 2;
+}

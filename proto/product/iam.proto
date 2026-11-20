@@ -1,0 +1,710 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message IAMPermissionSchemaScopeOption {
+  string mode = 1;
+  bool enabled = 2;
+  string disabled_reason = 3;
+}
+
+message IAMPermissionSchemaCapabilities {
+  bool application_policy_actions_included = 1;
+  bool matrixone_actions_included = 2;
+  bool operation_requirements_included = 3;
+  bool row_column_rule_schema_included = 4;
+  bool data_privilege_transport_ready = 5;
+  bool database_table_dcl_verified = 6;
+  bool row_column_contract_ready = 7;
+  bool row_column_enforcement_verified = 8;
+}
+
+message IAMPermissionSchemaResource {
+  string resource_type = 1;
+  string schema_version = 2;
+  repeated IAMPermissionSchemaScopeOption scope_options = 3;
+}
+
+message IAMPermissionSchemaGrantAction {
+  string action_id = 1;
+  string persistence_target = 2;
+  repeated string grant_scope_modes = 3;
+  bool grant_inheritable = 4;
+}
+
+message IAMPermissionSchemaAction {
+  string action_id = 1;
+  string resource_type = 2;
+  string persistence_target = 3;
+  bool grantable = 4;
+  bool grant_action = 5;
+  string grant_target_action_id = 6;
+  repeated IAMPermissionSchemaScopeOption scope_options = 7;
+  repeated string grant_scope_modes = 8;
+  bool inheritable = 9;
+  bool grant_inheritable = 10;
+  repeated string covering_action_ids = 11;
+  string description = 12;
+  map<string, string> attributes = 13;
+  bool grant_supported = 14;
+  repeated IAMPermissionSchemaGrantAction grant_actions = 15;
+}
+
+message IAMPermissionSchemaRequirement {
+  string resource_name = 1;
+  string resource_type = 2;
+  repeated string action_ids = 3;
+  string mode = 4;
+  bool direct_only = 5;
+  map<string, string> options = 6;
+}
+
+message IAMPermissionSchemaOperation {
+  string action_id = 1;
+  string schema_version = 2;
+  repeated IAMPermissionSchemaRequirement requirements = 3;
+}
+
+message IAMPermissionSchemaResult {
+  string schema_version = 1;
+  IAMPermissionSchemaCapabilities capabilities = 2;
+  repeated IAMPermissionSchemaResource resources = 3;
+  repeated IAMPermissionSchemaAction actions = 4;
+  repeated IAMPermissionSchemaOperation operations = 5;
+  string request_id = 6;
+  string trace_id = 7;
+}
+
+message IAMRoleSummary {
+  string role_id = 1;
+  string role_name = 2;
+  string description = 3;
+  string lifecycle_state = 4;
+  int64 lifecycle_version = 5;
+  bool system_role = 6;
+  bool protected_role = 7;
+  bool policy_mutation_allowed = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  string system_role_name = 11;
+}
+
+message IAMRoleListResult {
+  repeated IAMRoleSummary roles = 1;
+  string request_id = 2;
+  string trace_id = 3;
+}
+
+// IAMUserRoleBindingItem is one canonical role binding returned for a user.
+// The shape mirrors the Core IAM role-binding read contract.
+message IAMUserRoleBindingItem {
+  string role_id = 1;
+  string role_name = 2;
+  string lifecycle_state = 3;
+  int64 lifecycle_version = 4;
+  bool system_role = 5;
+  bool selectable = 6;
+  string disabled_reason = 7;
+  string provisioning_state = 8;
+  int64 provisioning_version = 9;
+}
+
+message IAMUserRoleBindingsResult {
+  string user_id = 1;
+  repeated IAMUserRoleBindingItem roles = 2;
+  string default_role_id = 3;
+  int64 default_role_version = 4;
+  // Core exposes the aggregate version as binding-vN for read diagnostics.
+  string binding_version = 5;
+  string request_id = 6;
+  string trace_id = 7;
+}
+
+message IAMUserRoleBindingsRequest {
+  repeated string assigned_role_ids = 1;
+  string default_role_id = 2;
+  int64 expected_binding_version = 3;
+  int64 expected_default_role_version = 4;
+  string request_id = 5;
+  bool clear_default_role = 6;
+}
+
+message IAMUserRoleBindingsMutationResult {
+  string user_id = 1;
+  repeated string assigned_role_ids = 2;
+  string default_role_id = 3;
+  int64 binding_version = 4;
+  int64 default_role_version = 5;
+  string audit_event_id = 6;
+  bool idempotent_replay = 7;
+  string request_id = 8;
+  string trace_id = 9;
+}
+
+message IAMApplicationPolicyStatement {
+  string statement_id = 1;
+  string action_id = 2;
+  string resource_type = 3;
+  string scope_mode = 4;
+  string resource_id = 5;
+  string condition_hash = 6;
+  string target_action_id = 7;
+  string grant_scope_mode = 8;
+  bool grant_delegatable = 9;
+  string grant_resource_id = 10;
+}
+
+message IAMRoleCreateRequest {
+  string name = 1;
+  string description = 2;
+  string schema_version = 3;
+  string request_id = 4;
+  repeated IAMApplicationPolicyStatement statements = 5;
+  repeated IAMDataPrivilegeMutation data_privilege_mutations = 6;
+}
+
+message IAMRoleCreateResult {
+  string role_id = 1;
+  int64 role_version = 2;
+  int64 policy_version = 3;
+  string provisioning_state = 4;
+  int64 provisioning_version = 5;
+  string provisioning_error_code = 6;
+  string request_id = 7;
+  string trace_id = 8;
+  int64 data_privilege_version = 9;
+  bool idempotent_replay = 10;
+  string session_invalidation_status = 11;
+}
+
+message IAMRoleUpdateRequest {
+  string name = 1;
+  string description = 2;
+  int64 expected_lifecycle_version = 3;
+  string request_id = 4;
+  string schema_version = 5;
+  int64 expected_policy_version = 6;
+  int64 expected_data_privilege_version = 7;
+  repeated IAMApplicationPolicyStatement statements = 8;
+  repeated IAMDataPrivilegeMutation data_privilege_mutations = 9;
+}
+
+message IAMRoleLifecycleRequest {
+  string target_state = 1;
+  string reason_code = 2;
+  int64 expected_lifecycle_version = 3;
+  string request_id = 4;
+}
+
+message IAMRoleDeleteRequest {
+  string reason_code = 1;
+  int64 expected_lifecycle_version = 2;
+  string request_id = 3;
+  IAMRoleDeleteOwnershipTransfer ownership_transfer = 4;
+}
+
+message IAMRoleDeleteOwnershipTransfer {
+  string expected_ownership_version = 1;
+  string target_role_id = 2;
+  repeated IAMRoleDeleteOwnershipTarget targets = 3;
+}
+
+message IAMRoleDeleteOwnershipTarget {
+  string resource_type = 1;
+  string resource_id = 2;
+  string target_role_id = 3;
+}
+
+message IAMRoleDeleteOwnershipItem {
+  string resource_type = 1;
+  string resource_id = 2;
+  string display_name = 3;
+  int64 ownership_version = 4;
+}
+
+message IAMRoleDeleteOwnershipList {
+  repeated IAMRoleDeleteOwnershipItem items = 1;
+  string ownership_version = 2;
+  string next_cursor = 3;
+}
+
+message IAMRoleDeleteOwnershipPage {
+  repeated IAMRoleDeleteOwnershipItem items = 1;
+  int64 owned_count = 2;
+  string ownership_version = 3;
+  string next_cursor = 4;
+}
+
+message IAMRoleRecord {
+  string workspace_id = 1;
+  string role_id = 2;
+  string role_name = 3;
+  string description = 4;
+  string lifecycle_state = 5;
+  int64 lifecycle_version = 6;
+  bool system_role = 7;
+}
+
+message IAMRoleMutationResult {
+  IAMRoleRecord role = 1;
+  bool idempotent_replay = 2;
+}
+
+message IAMRoleDeleteImpactResult {
+  reserved 4, 5;
+  reserved "parent_inheritance_count", "child_inheritance_count";
+
+  IAMRoleRecord role = 1;
+  int64 direct_binding_count = 2;
+  int64 default_role_count = 3;
+  int64 active_ownership_count = 6;
+  int64 active_policy_grant_count = 7;
+  int64 pending_operation_count = 8;
+  bool blocked = 9;
+  IAMRoleDeleteOwnershipPage ownership = 10;
+  bool transfer_blocked = 11;
+}
+
+message IAMRolePermissionViewCapabilities {
+  bool direct_policy_included = 1;
+  bool inherited_policy_included = 2;
+  bool effective_policy_included = 3;
+  bool matrixone_data_privileges_included = 4;
+  bool ownership_impact_included = 5;
+  bool caller_editable_state_included = 6;
+}
+
+message IAMRolePermissionGrant {
+  int64 policy_version = 1;
+  string statement_id = 2;
+  string statement_kind = 3;
+  string action_id = 4;
+  string resource_type = 5;
+  string scope_mode = 6;
+  string resource_id = 7;
+  string resource_key = 8;
+  string grant_index_key = 9;
+  string condition_hash = 10;
+  string target_action_id = 11;
+  string grant_scope_mode = 12;
+  bool grant_delegatable = 13;
+  string grant_resource_id = 14;
+}
+
+message IAMRolePermissionViewResult {
+  string role_id = 1;
+  string schema_version = 2;
+  int64 policy_version = 3;
+  string policy_hash = 4;
+  string role_kind = 5;
+  string role_graph_version = 6;
+  string lifecycle_version = 7;
+  bool system_role = 8;
+  bool protected_role = 9;
+  bool policy_mutation_allowed = 10;
+  IAMRolePermissionViewCapabilities capabilities = 11;
+  repeated IAMRolePermissionGrant direct_grants = 12;
+  string request_id = 13;
+  string trace_id = 14;
+  int64 expected_role_lifecycle_version = 15;
+  string lifecycle_state = 16;
+}
+
+message IAMObjectOwnershipTransferRequest {
+  string target_role_id = 1;
+  int64 expected_ownership_version = 2;
+  string request_id = 3;
+}
+
+message IAMObjectOwnershipTransferResult {
+  string workspace_id = 1;
+  string resource_type = 2;
+  string resource_id = 3;
+  string previous_owner_role_id = 4;
+  string owner_role_id = 5;
+  int64 ownership_version = 6;
+  string request_id = 7;
+  bool idempotent_replay = 8;
+}
+
+message IAMObjectGrantChange {
+  bool remove = 1;
+  string action_id = 2;
+  string condition_hash = 3;
+}
+
+message IAMObjectGrantsMutationRequest {
+  string schema_version = 1;
+  int64 expected_policy_version = 2;
+  int64 expected_role_lifecycle_version = 3;
+  string request_id = 4;
+  repeated IAMObjectGrantChange changes = 5;
+}
+
+message IAMObjectGrantsMutationResult {
+  string workspace_id = 1;
+  string resource_type = 2;
+  string resource_id = 3;
+  string target_role_id = 4;
+  int64 previous_policy_version = 5;
+  int64 policy_version = 6;
+  int64 statement_count = 7;
+  int64 added_count = 8;
+  int64 removed_count = 9;
+  bool idempotent_replay = 10;
+  string canonical_policy_hash = 11;
+  bool validate_only = 12;
+  string request_id = 13;
+  string trace_id = 14;
+}
+
+message IAMObjectPermissionOwner {
+  string role_id = 1;
+  int64 ownership_version = 2;
+  string ownership_status = 3;
+  string ownership_audit_id = 4;
+  string created_by_principal = 5;
+  string created_by_role_id = 6;
+  // Management metadata: active or disabled; not an authorization decision.
+  string role_lifecycle_state = 7;
+}
+
+message IAMObjectPermissionViewCapabilities {
+  bool owner_included = 1;
+  bool direct_specific_grants_included = 2;
+  bool all_scope_grants_included = 3;
+  bool inherited_grants_included = 4;
+  bool system_sources_included = 5;
+  bool matrixone_data_privileges_included = 6;
+  bool editable_state_included = 7;
+}
+
+message IAMObjectPermissionGrant {
+  string role_id = 1;
+  int64 policy_version = 2;
+  string statement_id = 3;
+  string statement_kind = 4;
+  string action_id = 5;
+  string resource_type = 6;
+  string scope_mode = 7;
+  string resource_id = 8;
+  string resource_key = 9;
+  string grant_index_key = 10;
+  string condition_hash = 11;
+  string target_action_id = 12;
+  string grant_scope_mode = 13;
+  bool grant_delegatable = 14;
+  string grant_resource_id = 15;
+  // Management metadata: active or disabled; not an authorization decision.
+  string role_lifecycle_state = 16;
+}
+
+message IAMObjectPermissionViewResult {
+  string workspace_id = 1;
+  string resource_type = 2;
+  string resource_id = 3;
+  IAMObjectPermissionOwner owner = 4;
+  IAMObjectPermissionViewCapabilities capabilities = 5;
+  repeated IAMObjectPermissionGrant direct_grants = 6;
+  repeated IAMObjectPermissionGrant all_scope_grants = 7;
+  string request_id = 8;
+  string trace_id = 9;
+}
+
+// IAMDataPrivilegeRowExpression is one row-rule expression in a data-privilege
+// mutation or the saved UI configuration returned by the service.
+message IAMDataPrivilegeRowExpression {
+  string operator = 1;
+  repeated string expression = 2;
+  string match_type = 3;
+}
+
+message IAMDataPrivilegeRowRule {
+  string column = 1;
+  string relation = 2;
+  repeated IAMDataPrivilegeRowExpression expression_list = 3;
+}
+
+message IAMDataPrivilegeRowColumnDraft {
+  repeated string black_column_list = 1;
+  repeated IAMDataPrivilegeRowRule rule_list = 2;
+}
+
+message IAMDataPrivilegeRowColumnMutation {
+  string mode = 1;
+  IAMDataPrivilegeRowColumnDraft draft = 2;
+  IAMDataPrivilegeCanonicalRowColumnRule canonical_rule = 3;
+  string draft_fingerprint = 4;
+  string table_schema_version = 5;
+  string subject_attribute_version = 6;
+}
+
+message IAMDataPrivilegeCanonicalRowColumnRule {
+  repeated string select_columns = 1;
+  repeated IAMDataPrivilegeCanonicalRowFilter filters = 2;
+  string filters_join = 3;
+}
+
+message IAMDataPrivilegeCanonicalRowFilter {
+  string column = 1;
+  string operator = 2;
+  repeated string values = 3;
+  string match_type = 4;
+}
+
+message IAMDataPrivilegeMutation {
+  string operation = 1;
+  string action_id = 2;
+  string resource_type = 3;
+  string resource_id = 4;
+  string privilege = 5;
+  bool with_grant_option = 6;
+  IAMDataPrivilegeRowColumnMutation row_column = 7;
+}
+
+// IAMDataPrivilegeMutationRequest is shared by validate and apply. The
+// service validates all enum-like values against its current permission schema.
+message IAMDataPrivilegeMutationRequest {
+  string request_id = 1;
+  int64 expected_data_privilege_version = 2;
+  repeated IAMDataPrivilegeMutation mutations = 3;
+}
+
+message IAMDataPrivilegeColumn {
+  string name = 1;
+  string type = 2;
+}
+
+message IAMDataPrivilegeItem {
+  string resource_type = 1;
+  string resource_id = 2;
+  string display_name = 3;
+  string action_id = 4;
+  string privilege = 5;
+  bool with_grant_option = 6;
+  string source = 7;
+  string drift_status = 8;
+  IAMDataPrivilegeRowColumnDraft ui_config_snapshot = 9;
+  repeated IAMDataPrivilegeColumn columns = 10;
+  string table_schema_version = 11;
+  string subject_attribute_version = 12;
+  string rule_fingerprint = 13;
+  bool editable = 14;
+  string disabled_reason = 15;
+}
+
+message IAMDataPrivilegeViewResult {
+  string target_role_id = 1;
+  int64 data_privilege_version = 2;
+  string matrixone_fact_version = 3;
+  repeated IAMDataPrivilegeItem items = 4;
+  string request_id = 5;
+  string trace_id = 6;
+}
+
+message IAMDataPrivilegeFieldError {
+  string code = 1;
+  string path = 2;
+}
+
+message IAMDataPrivilegeValidationResult {
+  bool valid = 1;
+  repeated IAMDataPrivilegeFieldError errors = 2;
+  repeated string warnings = 3;
+  string payload_fingerprint = 4;
+  string request_id = 5;
+  string trace_id = 6;
+  repeated IAMDataPrivilegeMutation canonical_mutations = 7;
+}
+
+message IAMDataPrivilegeResourceResult {
+  string resource_type = 1;
+  string resource_id = 2;
+  string action_id = 3;
+  string privilege_key = 4;
+  string operation = 5;
+  string state = 6;
+  string session_invalidation_status = 7;
+  string matrixone_fact_version = 8;
+  string error_code = 9;
+}
+
+message IAMDataPrivilegeOperationResult {
+  string request_id = 1;
+  string trace_id = 2;
+  string operation_id = 3;
+  string audit_event_id = 4;
+  string state = 5;
+  int64 data_privilege_version = 6;
+  bool idempotent_replay = 7;
+  string session_invalidation_status = 8;
+  string matrixone_fact_version = 9;
+  repeated IAMDataPrivilegeResourceResult resource_results = 10;
+}
+
+message IAMDataPrivilegeRepairRequest {
+  string request_id = 1;
+  int64 expected_data_privilege_version = 2;
+}
+
+// Role inheritance reads expose a graph snapshot; mutations coordinate only the affected roles.
+message IAMRoleInheritanceEdge {
+  string child_role_id = 1;
+  string parent_role_id = 2;
+  bool with_grant_option = 3;
+  string grant_id = 4;
+}
+message IAMRoleInheritanceResult {
+  string root_role_id = 1;
+  repeated IAMRoleInheritanceEdge edges = 2;
+  string role_graph_version = 3;
+  string request_id = 4;
+  string trace_id = 5;
+}
+message IAMRoleInheritanceMutationRequest {
+  string parent_role_id = 1;
+  int64 expected_child_lifecycle_version = 2;
+  int64 expected_parent_lifecycle_version = 3;
+  reserved 4;
+  reserved "expected_role_graph_version";
+  string request_id = 5;
+}
+message IAMRoleInheritanceMutationResult {
+  string child_role_id = 1;
+  string parent_role_id = 2;
+  reserved 3;
+  reserved "role_graph_version";
+  bool idempotent_replay = 4;
+}
+message IAMApplicationPolicyRequest {
+  string schema_version = 1;
+  int64 expected_policy_version = 2;
+  int64 expected_role_lifecycle_version = 3;
+  string request_id = 4;
+  repeated IAMApplicationPolicyStatement statements = 5;
+}
+message IAMApplicationPolicyValidationResult {
+  bool valid = 1;
+  string policy_hash = 2;
+  int64 statement_count = 3;
+  string request_id = 4;
+  string trace_id = 5;
+}
+message IAMApplicationPolicyApplyResult {
+  string role_id = 1;
+  int64 policy_version = 2;
+  bool idempotent_replay = 3;
+  string request_id = 4;
+  string trace_id = 5;
+}
+
+message IAMRoleMember { string user_id=1; bool default_role=2; int64 default_role_version=3; int64 binding_created_at=4; string display_name=5; string email=6; }
+message IAMRoleMembersResult { string role_id=1; repeated IAMRoleMember members=2; string next_cursor=3; string request_id=4; string trace_id=5; }
+
+message IAMSetDefaultRoleRequest {
+  string target_role_id = 1;
+  int64 expected_default_role_version = 2;
+  string request_id = 3;
+}
+
+message IAMSetDefaultRoleResult {
+  string default_role_id = 1;
+  int64 default_role_version = 2;
+  string schema_version = 3;
+  string capability_version = 4;
+  string audit_event_id = 5;
+  string request_id = 6;
+  string trace_id = 7;
+  bool idempotent_replay = 8;
+}
+
+message IAMOwnershipImpactTypeCount {
+  string resource_type = 1;
+  int64 count = 2;
+}
+
+message IAMOwnershipImpactItem {
+  string resource_type = 1;
+  string resource_id = 2;
+  int64 ownership_version = 3;
+  string repair_state = 4;
+  string audit_event_id = 5;
+  string created_by_principal = 6;
+  string created_by_role_id = 7;
+}
+
+message IAMOwnershipImpactResult {
+  string workspace_id = 1;
+  string role_id = 2;
+  int64 owned_count = 3;
+  repeated IAMOwnershipImpactTypeCount by_type = 4;
+  repeated IAMOwnershipImpactItem items = 5;
+  string ownership_version = 6;
+  bool can_delete = 7;
+  string blocked_reason = 8;
+  bool transfer_supported = 9;
+  string role_graph_version = 10;
+  string lifecycle_version = 11;
+  string request_id = 12;
+  string trace_id = 13;
+}
+
+message IAMRoleAuditEvent {
+  string audit_event_id = 1;
+  string operation = 2;
+  string operation_id = 3;
+  string actor_principal_type = 4;
+  string actor_principal_id = 5;
+  string actor_display_name = 6;
+  string effective_role_id = 7;
+  string target_role_id = 8;
+  google.protobuf.Struct diff = 9;
+  int64 policy_version = 10;
+  int64 ownership_version = 11;
+  int64 data_privilege_version = 12;
+  string role_graph_version = 13;
+  string lifecycle_version = 14;
+  string schema_version = 15;
+  string request_id = 16;
+  string trace_id = 17;
+  string status = 18;
+  string error_code = 19;
+  int64 created_at = 20;
+}
+
+message IAMRoleAuditEventsResult {
+  repeated IAMRoleAuditEvent events = 1;
+  string next_cursor = 2;
+  string request_id = 3;
+  string trace_id = 4;
+}
+
+message IAMUserAuditSummary {
+  string key = 1;
+  string value = 2;
+}
+
+message IAMUserAuditEvent {
+  string audit_event_id = 1;
+  string event_type = 2;
+  string operation_id = 3;
+  string actor_principal_type = 4;
+  string actor_principal_id = 5;
+  string actor_display_name = 6;
+  string effective_role_id = 7;
+  string status = 8;
+  repeated IAMUserAuditSummary summary = 9;
+  string lifecycle_version = 10;
+  int64 created_at = 11;
+}
+
+message IAMUserAuditEventsResult {
+  repeated IAMUserAuditEvent events = 1;
+  string next_cursor = 2;
+  string request_id = 3;
+  string trace_id = 4;
+}

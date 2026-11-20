@@ -1,0 +1,210 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message WorkerImageSelection {
+  string kind = 1;
+  string image_id = 2 [json_name = "image_id"];
+  string platform = 3;
+  string worker_type = 4 [json_name = "worker_type"];
+}
+
+message ComputeResource {
+  string id = 1;
+  string workspace_id = 2 [json_name = "workspace_id"];
+  string name = 3;
+  string description = 4;
+  string spec_id = 5 [json_name = "spec_id"];
+  int32 cpu = 6;
+  int32 memory_gib = 7 [json_name = "memory_gib"];
+  int32 gpu = 8;
+  int32 min_replicas = 9 [json_name = "min_replicas"];
+  int32 max_replicas = 10 [json_name = "max_replicas"];
+  int32 current_replicas = 11 [json_name = "current_replicas"];
+  string go_worker_image_id = 12 [json_name = "go_worker_image_id"];
+  string python_worker_image_id = 13 [json_name = "python_worker_image_id"];
+  string platform = 14;
+  int32 auto_suspend_minutes = 15 [json_name = "auto_suspend_minutes"];
+  bool is_default = 16 [json_name = "is_default"];
+  string status = 17;
+  string status_message = 18 [json_name = "status_message"];
+  string created_by = 19 [json_name = "created_by"];
+  string created_at = 20 [json_name = "created_at"];
+  string updated_at = 21 [json_name = "updated_at"];
+  string kind = 22;
+  int32 cpu_milli = 23 [json_name = "cpu_milli"];
+  int32 memory_mib = 24 [json_name = "memory_mib"];
+  int32 gpu_count = 25 [json_name = "gpu_count"];
+  int32 gpu_memory_mib = 26 [json_name = "gpu_memory_mib"];
+  int32 gpu_cores = 27 [json_name = "gpu_cores"];
+  int32 desired_replicas = 28 [json_name = "desired_replicas"];
+  repeated WorkerImageSelection worker_images = 29 [json_name = "worker_images"];
+  string scale_reason = 30 [json_name = "scale_reason"];
+  string last_activation_at = 31 [json_name = "last_activation_at"];
+  string last_active_at = 32 [json_name = "last_active_at"];
+  repeated string allowed_actions = 33 [json_name = "allowed_actions"];
+  string py_requirements_txt = 34 [json_name = "py_requirements_txt"];
+  string py_requirements_sha = 35 [json_name = "py_requirements_sha"];
+  ComputeResourcePyDeps py_deps = 36 [json_name = "py_deps"];
+  int32 managed_sandboxes = 37 [json_name = "managed_sandboxes"];
+}
+
+// Read-time dependency observations returned by the Compute resource owner.
+message ComputeResourcePyDeps {
+  string status = 1;
+  int32 ready_count = 2 [json_name = "ready_count"];
+  int32 total_count = 3 [json_name = "total_count"];
+  string last_error = 4 [json_name = "last_error"];
+}
+
+message ComputeResourceListResult {
+  repeated ComputeResource resources = 1;
+}
+
+// ComputeResourceOwnership records the canonical Ownership adopted by the
+// audited historical ComputeResource repair endpoint.
+message ComputeResourceOwnership {
+  string workspace_id = 1 [json_name = "workspace_id"];
+  string resource_type = 2 [json_name = "resource_type"];
+  string resource_id = 3 [json_name = "resource_id"];
+  string owner_role_id = 4 [json_name = "owner_role_id"];
+  string authorized_role_id = 5 [json_name = "authorized_role_id"];
+  string status = 6;
+  int64 ownership_version = 7 [json_name = "ownership_version"];
+  bool idempotent_replay = 8 [json_name = "idempotent_replay"];
+}
+
+message ComputeResourceWorkspaceInfo {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3 [json_name = "owner_id"];
+  string account_name = 4 [json_name = "account_name"];
+}
+
+message AdminComputeResource {
+  string id = 1;
+  string workspace_id = 2 [json_name = "workspace_id"];
+  string name = 3;
+  string description = 4;
+  string spec_id = 5 [json_name = "spec_id"];
+  int32 cpu = 6;
+  int32 memory_gib = 7 [json_name = "memory_gib"];
+  int32 gpu = 8;
+  int32 min_replicas = 9 [json_name = "min_replicas"];
+  int32 max_replicas = 10 [json_name = "max_replicas"];
+  int32 current_replicas = 11 [json_name = "current_replicas"];
+  string go_worker_image_id = 12 [json_name = "go_worker_image_id"];
+  string python_worker_image_id = 13 [json_name = "python_worker_image_id"];
+  string platform = 14;
+  int32 auto_suspend_minutes = 15 [json_name = "auto_suspend_minutes"];
+  bool is_default = 16 [json_name = "is_default"];
+  string status = 17;
+  string status_message = 18 [json_name = "status_message"];
+  string created_by = 19 [json_name = "created_by"];
+  string created_at = 20 [json_name = "created_at"];
+  string updated_at = 21 [json_name = "updated_at"];
+  ComputeResourceWorkspaceInfo workspace = 22;
+  string kind = 23;
+  int32 cpu_milli = 24 [json_name = "cpu_milli"];
+  int32 memory_mib = 25 [json_name = "memory_mib"];
+  int32 gpu_count = 26 [json_name = "gpu_count"];
+  int32 gpu_memory_mib = 27 [json_name = "gpu_memory_mib"];
+  int32 gpu_cores = 28 [json_name = "gpu_cores"];
+  int32 desired_replicas = 29 [json_name = "desired_replicas"];
+  repeated WorkerImageSelection worker_images = 30 [json_name = "worker_images"];
+  string scale_reason = 31 [json_name = "scale_reason"];
+  string last_activation_at = 32 [json_name = "last_activation_at"];
+  string last_active_at = 33 [json_name = "last_active_at"];
+  string py_requirements_txt = 34 [json_name = "py_requirements_txt"];
+  string py_requirements_sha = 35 [json_name = "py_requirements_sha"];
+  ComputeResourcePyDeps py_deps = 36 [json_name = "py_deps"];
+  int32 managed_sandboxes = 37 [json_name = "managed_sandboxes"];
+}
+
+message AdminComputeResourceListResult {
+  repeated AdminComputeResource items = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ComputeResourceSpec {
+  string id = 1;
+  string kind = 2;
+  string family = 3;
+  string family_name = 4 [json_name = "family_name"];
+  string family_name_en = 5 [json_name = "family_name_en"];
+  int32 cpu_milli = 6 [json_name = "cpu_milli"];
+  int32 memory_mib = 7 [json_name = "memory_mib"];
+  int32 gpu_count = 8 [json_name = "gpu_count"];
+  int32 gpu_memory_mib = 9 [json_name = "gpu_memory_mib"];
+  int32 gpu_cores = 10 [json_name = "gpu_cores"];
+  double credit_per_hour = 11 [json_name = "credit_per_hour"];
+  string description = 12;
+  bool enabled = 13;
+  string description_en = 14 [json_name = "description_en"];
+  google.protobuf.Struct node_placement = 15 [json_name = "node_placement"];
+  bool is_system = 16 [json_name = "is_system"];
+  string created_by = 17 [json_name = "created_by"];
+  string updated_by = 18 [json_name = "updated_by"];
+  string created_at = 19 [json_name = "created_at"];
+  string updated_at = 20 [json_name = "updated_at"];
+}
+
+message ComputeResourceSpecManagementPermission {
+  bool can_manage_specs = 1 [json_name = "can_manage_specs"];
+}
+
+message WorkerImage {
+  string id = 1;
+  string type = 2;
+  string tag = 3;
+  string repository = 4;
+  string platform = 5;
+  string description = 6;
+  bool is_default = 7 [json_name = "is_default"];
+  string status = 8;
+  string registered_at = 9 [json_name = "registered_at"];
+  string updated_at = 10 [json_name = "updated_at"];
+  string worker_type = 11 [json_name = "worker_type"];
+  string image_key = 12 [json_name = "image_key"];
+}
+
+message WorkerImageListResult {
+  repeated WorkerImage images = 1;
+}
+
+message ComputeWorkerRuntime {
+  string worker_type = 1 [json_name = "worker_type"];
+  string status = 2;
+  int32 desired_replicas = 3 [json_name = "desired_replicas"];
+  int32 current_replicas = 4 [json_name = "current_replicas"];
+  string last_activation_at = 5 [json_name = "last_activation_at"];
+  string last_active_at = 6 [json_name = "last_active_at"];
+  string created_at = 7 [json_name = "created_at"];
+  string updated_at = 8 [json_name = "updated_at"];
+  string compute_resource_id = 9 [json_name = "compute_resource_id"];
+}
+
+message ComputeWorkerRuntimeListResult {
+  repeated ComputeWorkerRuntime runtimes = 1;
+}
+
+message BoundWorkflowInfo {
+  string id = 1;
+  string name = 2;
+  repeated string node_names = 3 [json_name = "node_names"];
+}
+
+message ComputeDeletePreflightResult {
+  int32 active_tasks = 1 [json_name = "active_tasks"];
+  repeated string active_task_ids = 2 [json_name = "active_task_ids"];
+  int32 bound_workflows = 3 [json_name = "bound_workflows"];
+  repeated BoundWorkflowInfo bound_workflow_details = 4 [json_name = "bound_workflow_details"];
+  int32 managed_sandboxes = 5 [json_name = "managed_sandboxes"];
+  repeated string managed_sandbox_ids = 6 [json_name = "managed_sandbox_ids"];
+}

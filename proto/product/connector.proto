@@ -1,0 +1,387 @@
+syntax = "proto3";
+
+package matrixflow.sdk.product;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+
+message DBListDatabasesResult {
+  repeated string databases = 1;
+}
+
+// Wire SoT: moi-backend ConnectorController.Validate → gin.H{"valid": bool}.
+message ConnectorValidateResult {
+  // Preserve an explicit negative validation outcome when SDK clients serialize
+  // the response again; an absent result is distinct from valid=false.
+  optional bool valid = 1;
+}
+
+message RESTSourceField {
+  string name = 1;
+  string path = 2;
+  string source_type = 3 [json_name = "source_type"];
+  string suggested_target_type = 4 [json_name = "suggested_target_type"];
+  bool nullable = 5;
+  bool required = 6;
+}
+
+message RESTReadResult {
+  int32 status_code = 1 [json_name = "status_code"];
+  repeated google.protobuf.Value records = 2;
+  repeated RESTSourceField fields = 3;
+}
+
+message DBListSchemasResult {
+  repeated string schemas = 1;
+}
+
+message DBListTablesResult {
+  repeated string tables = 1;
+}
+
+message ColumnSchema {
+  string name = 1;
+  string data_type = 2 [json_name = "data_type"];
+  string mapped_type = 3 [json_name = "mapped_type"];
+  bool is_primary_key = 4 [json_name = "is_primary_key"];
+  bool is_nullable = 5 [json_name = "is_nullable"];
+  bool is_auto_incr = 6 [json_name = "is_auto_incr"];
+}
+
+message DBSourceSchemaResult {
+  repeated ColumnSchema columns = 1;
+}
+
+message MODatabaseListResult {
+  repeated string databases = 1;
+}
+
+message MODatabaseTableListResult {
+  repeated string tables = 1;
+}
+
+message MOCheckTableNameResult {
+  bool exists = 1;
+}
+
+message MOColumnMappingResult {
+  map<string, google.protobuf.ListValue> column_map = 1 [json_name = "column_map"];
+  repeated string need_mapping_columns = 2 [json_name = "need_mapping_columns"];
+}
+
+message Connector {
+  string id = 1;
+  string name = 2;
+  int32 source_type = 3 [json_name = "source_type"];
+  int64 created_at = 4 [json_name = "created_at"];
+  int64 updated_at = 5 [json_name = "updated_at"];
+  string status = 6;
+  string username = 7;
+  repeated string related_task_ids = 8 [json_name = "related_task_ids"];
+  repeated int32 usage_type = 9 [json_name = "usage_type"];
+  google.protobuf.Struct config = 10;
+  repeated string allowed_actions = 11 [json_name = "allowed_actions"];
+}
+
+message ConnectorListResult {
+  repeated Connector connectors = 1;
+  int64 total = 2;
+}
+
+message ConnectorFile {
+  string uri = 1;
+  string filename = 2;
+  int64 size = 3;
+  int32 type = 4;
+  string path = 5;
+  int64 create_time = 6 [json_name = "create_time"];
+  int64 update_time = 7 [json_name = "update_time"];
+}
+
+message ConnectorFileListResult {
+  repeated ConnectorFile files = 1;
+  string cursor = 2;
+  bool has_more = 3 [json_name = "has_more"];
+}
+
+message UploadResult {
+  string file_id = 1 [json_name = "file_id"];
+  string message = 2;
+  bool success = 3;
+}
+
+message UploadResponse {
+  string file_id = 1 [json_name = "file_id"];
+  string message = 2;
+  bool success = 3;
+  repeated UploadResult results = 4;
+  string task_id = 5 [json_name = "task_id"];
+  repeated string file_ids = 6 [json_name = "file_ids"];
+  string acceptance_status = 7 [json_name = "acceptance_status"];
+}
+
+message LocalUploadResult {
+  repeated string conn_file_ids = 1 [json_name = "conn_file_ids"];
+  repeated string file_ids = 2 [json_name = "file_ids"];
+}
+
+message PreviewRow {
+  int32 number = 1;
+  string column_name = 2 [json_name = "columnName"];
+  repeated string column_values = 3 [json_name = "columnValues"];
+  string char_number = 4 [json_name = "charNumber"];
+  string char_column_name = 5 [json_name = "charColumnName"];
+}
+
+message PreviewSheet {
+  string name = 1;
+  int32 row_count = 2 [json_name = "row_count"];
+}
+
+message PreviewFileResult {
+  string conn_file_id = 1 [json_name = "conn_file_id"];
+  int32 file_type = 2 [json_name = "file_type"];
+  repeated PreviewRow rows = 3;
+  repeated PreviewSheet sheets = 4;
+}
+
+message FileDownloadResult {
+  string url = 1;
+}
+
+message IDNamePath {
+  repeated string id_list = 1 [json_name = "id_list"];
+  repeated string name_list = 2 [json_name = "name_list"];
+}
+
+message LoadResult {
+  int64 lines = 1;
+  string reason = 2;
+}
+
+message ImportTaskRowStats {
+  optional int64 read_rows = 1 [json_name = "read_rows"];
+  optional int64 succeeded_rows = 2 [json_name = "succeeded_rows"];
+  optional int64 failed_rows = 3 [json_name = "failed_rows"];
+  optional int64 skipped_rows = 4 [json_name = "skipped_rows"];
+  bool complete = 5;
+}
+
+message ImportTask {
+  string id = 1;
+  string name = 2;
+  string source_connector_id = 3 [json_name = "source_connector_id"];
+  int32 source_connector_type = 4 [json_name = "source_connector_type"];
+  string connector_name = 5 [json_name = "connector_name"];
+  string volume_id = 6 [json_name = "volume_id"];
+  string volume_name = 7 [json_name = "volume_name"];
+  IDNamePath volume_path = 8 [json_name = "volume_path"];
+  string creator = 9;
+  int32 status = 10;
+  google.protobuf.Struct source_config = 11 [json_name = "source_config"];
+  int64 start_at = 12 [json_name = "start_at"];
+  int64 end_at = 13 [json_name = "end_at"];
+  int64 created_at = 14 [json_name = "created_at"];
+  int64 updated_at = 15 [json_name = "updated_at"];
+  repeated int32 file_types = 16 [json_name = "file_types"];
+  string path_regex = 17 [json_name = "path_regex"];
+  bool unzip_keep_structure = 18 [json_name = "unzip_keep_structure"];
+  google.protobuf.Struct dedup = 19;
+  IDNamePath table_path = 20 [json_name = "table_path"];
+  repeated LoadResult load_results = 21 [json_name = "load_results"];
+  // Backend wire is [][]string (each entry [connector_name, uri]); ListValue
+  // accepts nested JSON arrays under strict product decode (not {values:[...]}).
+  repeated google.protobuf.ListValue source_files = 22 [json_name = "source_files"];
+  int32 load_type = 23 [json_name = "load_type"];
+  int32 config_type = 24 [json_name = "config_type"];
+  int64 total_rows = 25 [json_name = "total_rows"];
+  int64 imported_rows = 26 [json_name = "imported_rows"];
+  int64 success_file_count = 27 [json_name = "success_file_count"];
+  int64 failed_file_count = 28 [json_name = "failed_file_count"];
+  // Multi-table / multi-sheet import targets (Backend dataconn.Task.table_paths).
+  repeated IDNamePath table_paths = 29 [json_name = "table_paths"];
+  string runtime_init_status = 30 [json_name = "runtime_init_status"];
+  string priority = 31;
+  string config_hash = 32 [json_name = "config_hash"];
+  string structured_config_hash = 33 [json_name = "structured_config_hash"];
+  // Structured-load summary/runtime are open objects on the Backend wire; Struct
+  // accepts arbitrary JSON objects under strict product decode.
+  google.protobuf.Struct structured_load_summary = 34 [json_name = "structured_load_summary"];
+  google.protobuf.Struct structured_runtime = 35 [json_name = "structured_runtime"];
+  google.protobuf.Struct structured_load_config = 36 [json_name = "structured_load_config"];
+  google.protobuf.ListValue mapping = 37;
+  google.protobuf.Struct schedule = 38;
+  google.protobuf.Struct backfill = 39;
+  ImportTaskRowStats latest_rows = 40 [json_name = "latest_rows"];
+  ImportTaskRowStats cumulative_rows = 41 [json_name = "cumulative_rows"];
+  string error_code = 42 [json_name = "error_code"];
+  string error_summary = 43 [json_name = "error_summary"];
+  string target_path_state = 44 [json_name = "target_path_state"];
+  string target_path_error_code = 45 [json_name = "target_path_error_code"];
+  string target_path_error_summary = 46 [json_name = "target_path_error_summary"];
+  repeated string allowed_actions = 47 [json_name = "allowed_actions"];
+}
+
+// Workspace counts after data_task.read filtering, without task enrichment.
+message ImportTaskStats {
+  int64 total = 1;
+  int64 running = 2;
+  int64 waiting = 3;
+  int64 failed = 4;
+}
+
+message ImportTaskListResult {
+  repeated ImportTask tasks = 1;
+  int64 total = 2;
+}
+
+message ImportTaskCreateResult {
+  string task_id = 1 [json_name = "task_id"];
+}
+
+message ImportTaskInfoResult {
+  ImportTask task = 1;
+}
+
+message ImportTaskFile {
+  string id = 1;
+  string name = 2;
+  int32 type = 3;
+  int32 status = 4;
+  uint64 size = 5;
+  int64 update_time = 6 [json_name = "update_time"];
+  string other_metadata = 7 [json_name = "other_metadata"];
+  string reason = 8;
+  string user = 9;
+  int64 start_time = 10 [json_name = "start_time"];
+  int64 end_time = 11 [json_name = "end_time"];
+  string path = 12;
+}
+
+message ImportTaskFileListResult {
+  repeated ImportTaskFile files = 1;
+  int64 total = 2;
+  int64 total_sum = 3 [json_name = "total_sum"];
+  int64 total_success = 4 [json_name = "total_success"];
+  int64 total_failed = 5 [json_name = "total_failed"];
+}
+
+message ImportTaskRun {
+  string id = 1;
+  string import_task_id = 2 [json_name = "import_task_id"];
+  string workflow_app_id = 3 [json_name = "workflow_app_id"];
+  string workflow_execution_id = 4 [json_name = "workflow_execution_id"];
+  int32 status = 5;
+  string error_message = 6 [json_name = "error_message"];
+  int64 row_count = 7 [json_name = "row_count"];
+  int64 file_count = 8 [json_name = "file_count"];
+  string started_at = 9 [json_name = "started_at"];
+  string ended_at = 10 [json_name = "ended_at"];
+  string created_at = 11 [json_name = "created_at"];
+  string current_phase = 12 [json_name = "current_phase"];
+  string runtime_job_id = 13 [json_name = "runtime_job_id"];
+  string runtime_job_state = 14 [json_name = "runtime_job_state"];
+  int64 manifest_rows = 15 [json_name = "manifest_rows"];
+  int64 staging_rows = 16 [json_name = "staging_rows"];
+  int64 compressed_bytes = 17 [json_name = "compressed_bytes"];
+  string manifest_uri = 18 [json_name = "manifest_uri"];
+  string manifest_digest = 19 [json_name = "manifest_digest"];
+  string checkpoint_json = 20 [json_name = "checkpoint_json"];
+}
+
+message ImportTaskRunListResult {
+  repeated ImportTaskRun runs = 1;
+  int64 total = 2;
+}
+
+// Wire SoT: moi-backend dataconn.ExportTaskItem (create + list row).
+// Create/list responses do not include creator/config/file_stats.
+message ExportTask {
+  repeated string allowed_actions = 11 [json_name = "allowed_actions"];
+  string id = 1;
+  string name = 2;
+  string connector_name = 3 [json_name = "connector_name"];
+  int32 type = 4;
+  int32 status = 5;
+  // Backend returns export_source as JSON [][]string (array of path arrays).
+  // Model as nested ListValue so protojson accepts [["a","b"],["c"]].
+  google.protobuf.ListValue export_source = 6 [json_name = "export_source"];
+  string create_time = 7 [json_name = "create_time"];
+  string end_time = 8 [json_name = "end_time"];
+  int64 file_success = 9 [json_name = "fileSuccess"];
+  int64 file_fail = 10 [json_name = "fileFail"];
+}
+
+message ExportTaskTerminalEvent {
+  string event_type = 1 [json_name = "event_type"];
+  string status = 2;
+  string ended_at = 3 [json_name = "ended_at"];
+}
+
+// Wire SoT: moi-backend dataconn.ExportTaskInfo (task/info detail).
+// Info response has creator/config/file_stats and no export_source.
+message ExportTaskInfo {
+  repeated string allowed_actions = 13 [json_name = "allowed_actions"];
+  string id = 1;
+  string name = 2;
+  string creator = 3;
+  string connector_name = 4 [json_name = "connector_name"];
+  int32 type = 5;
+  int32 status = 6;
+  google.protobuf.Struct config = 7;
+  string create_time = 8 [json_name = "create_time"];
+  string end_time = 9 [json_name = "end_time"];
+  ExportTaskFileStats file_stats = 10 [json_name = "file_stats"];
+  int64 file_success = 11 [json_name = "fileSuccess"];
+  int64 file_fail = 12 [json_name = "fileFail"];
+  ExportTaskTerminalEvent terminal_event = 14 [json_name = "terminal_event"];
+}
+
+message ExportTaskStats {
+  int64 total = 1;
+  int64 running = 2;
+  int64 pending = 3;
+  int64 failed = 4;
+}
+
+message ExportTaskListResult {
+  repeated ExportTask tasks = 1;
+  int64 total = 2;
+}
+
+message ExportTaskFileStats {
+  int64 total = 1;
+  int64 pending = 2;
+  int64 running = 3;
+  int64 failed = 4;
+  int64 completed = 5;
+}
+
+message ExportTaskFile {
+  string id = 1;
+  string file_name = 2 [json_name = "file_name"];
+  string file_type = 3 [json_name = "file_type"];
+  int32 status = 4;
+  repeated string full_path = 5 [json_name = "full_path"];
+  string details = 6;
+  string create_time = 7 [json_name = "create_time"];
+  string start_time = 8 [json_name = "start_time"];
+  string end_time = 9 [json_name = "end_time"];
+}
+
+message ExportTaskFilesResult {
+  repeated ExportTaskFile files = 1;
+  int64 total = 2;
+  int64 total_success = 3 [json_name = "total_success"];
+  int64 total_failure = 4 [json_name = "total_failure"];
+  int64 total_files = 5 [json_name = "total_files"];
+}
+
+message ExportTaskStateResult {
+  int64 total = 1;
+  int64 pending = 2;
+  int64 running = 3;
+  int64 failed = 4;
+  int64 completed = 5;
+}

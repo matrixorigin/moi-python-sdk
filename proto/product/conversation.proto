@@ -1,0 +1,18 @@
+syntax = "proto3";
+package matrixflow.sdk.product;
+option go_package = "github.com/matrixorigin/moi-go-sdk/v5/product";
+message ConversationTag {string name=1;string source=2;int64 created_at=3;int64 updated_at=4;}
+message ConversationSession {int64 id=1;string title=2;string source=3;string user_id=4;string config=5;repeated ConversationTag tags=6;int64 created_at=7;int64 updated_at=8;}
+message ConversationSessionList {repeated ConversationSession sessions=1;int64 total=2;int32 page=3;int32 page_size=4;}
+message ConversationUISessionRequest {string title=1;string source=2;string config=3;repeated string tags=4;}
+message ConversationWorkspaceSessionRequest {string title=1;string source=2;string config=3;optional string expected_title=4;}
+message ConversationUISessionListRequest {int32 page=1;int32 page_size=2;string source=3;string keyword=4;string tags=5;}
+message ConversationMutation {string message=1;}
+message ConversationUIMessageListRequest {int64 session_id=1;string source=2;string role=3;string status=4;string model=5;int64 after=6;int32 limit=7;}
+message ConversationUIMessage {int64 id=1;string user_id=2;optional int64 session_id=3;string source=4;string role=5;string original_content=6;string content=7;string model=8;string status=9;string config=10;string modified_response=11;string response=12;repeated ConversationTag tags=13;int64 created_at=14;int64 updated_at=15;}
+message ConversationWorkspaceMessage {int64 id=1;string user_id=2;int64 session_id=3;string source=4;int32 role=5;string original_content=6;string content=7;string model=8;string status=9;string config=10;string modified_response=11;string response=12;int64 created_at=13;int64 updated_at=14;}
+message ConversationWorkspaceMessageRequest {string source=1;int32 role=2;string original_content=3;string content=4;string model=5;string status=6;string response=7;string modified_response=8;string config=9;}
+message ConversationWorkspaceMessageList {repeated ConversationWorkspaceMessage messages=1;int64 total=2;}
+message ConversationLatestMessageID {int64 session_id=1;int64 message_id=2;}
+message ConversationTagRequest {string source=1;string name=2;string tag_source=3;string tag_name=4;}
+message ConversationTagList {repeated ConversationTag tags=1;int64 total=2;}
