@@ -1,6 +1,6 @@
 # MOI Product Python SDK
 
-[简体中文](https://github.com/matrixorigin/moi-python-sdk/blob/v5.2.3/README_zh-CN.md)
+[简体中文](README_zh-CN.md)
 
 Use the MatrixOne Intelligence (MOI) 5.x AI Studio product API from Python to manage workspaces, Catalog resources and files, workflows, knowledge bases, SQL, and agents. The server enforces workspace and role permissions.
 
@@ -17,11 +17,7 @@ python -m pip install moi-product-sdk
 python -c "from importlib.metadata import version; import moi_product_sdk; print(version('moi-product-sdk'))"
 ```
 
-To pin a version, choose it from the [PyPI release history](https://pypi.org/project/moi-product-sdk/#history). The [GitHub v5.2.3 release](https://github.com/matrixorigin/moi-python-sdk/releases/tag/v5.2.3) provides the source snapshot and its manifest. Package availability is listed separately on PyPI.
-
-### Older offline package
-
-The [official SDK downloads page](https://docs.matrixorigin.cn/moi/en/5.0/developer/quickstart/downloads/ai-studio.html) offers the `0.1.0-r2` offline archive, which contains a `0.1.0` wheel. If your deployment requires this older build, verify the archive and install the wheel included in it.
+To install this exact release, run `python -m pip install moi-product-sdk==5.2.3`. See the [PyPI release history](https://pypi.org/project/moi-product-sdk/#history). The [GitHub v5.2.3 release](https://github.com/matrixorigin/moi-python-sdk/releases/tag/v5.2.3) provides the source snapshot and its manifest. Package availability is listed separately on PyPI.
 
 ## Authentication and quickstart
 
@@ -32,7 +28,7 @@ export PRODUCT_API_BASE_URL='https://api.moi.matrixorigin.cn/v5'
 export PRODUCT_API_KEY='YOUR_PERSONAL_ACCESS_TOKEN'
 ```
 
-Save the following as `bind_workspace.py` and run `python bind_workspace.py`. The example binds a workspace by name and prints its ID, using the promoted `ensure_workspace` user-story entry. Once you have a workspace, continue with `WorkspaceHandle` for workspace-scoped tasks. Use `client.workspace(workspace_id)` only when you already sourced the workspace id.
+Save the following as `list_workspaces.py` and run `python list_workspaces.py` to list the workspaces visible to your account.
 
 ```python
 import os
@@ -43,22 +39,18 @@ client = sdk.new_with_personal_access_token(
     os.environ["PRODUCT_API_BASE_URL"],
     os.environ["PRODUCT_API_KEY"],
 )
-workspace = client.ensure_workspace("my-first-workspace")
-print(workspace.id, workspace.name)
-```
 
-Low-level route-aligned services stay available for explicit control:
-
-```python
 for workspace in client.workspaces().list().workspaces:
     print(workspace.id, workspace.name)
 ```
+
+To find a workspace by name and create it if missing, use `client.ensure_workspace("my-first-workspace")`. To work with a known workspace ID, use `client.workspace(workspace_id)`.
 
 The PAT identifies your account. Workspace requests use the server's Default Role unless you select a role for that workspace with `with_workspace_current_role_id` when constructing the client. Use an assigned role ID. The server validates the role and rejects invalid explicit selections.
 
 ## Compatibility and license
 
-Python SDK 5.2.3 targets the AI Studio API (`/v5`) on MOI 5.2.3. For other MOI versions, use the build specified by your deployment documentation. Older offline packages may cover different capabilities.
+Python SDK 5.2.3 targets the AI Studio API (`/v5`) on MOI 5.2.3. For other MOI versions, use the build specified by your deployment documentation.
 
 The [legacy Catalog SDK](https://github.com/matrixorigin/moi-python-sdk/tree/legacy) targets MOI 4.0 and uses `moi-python-sdk`, `moi`, and `RawClient` / `SDKClient`. To migrate to MOI 5.x, switch to the Product SDK's package, import, API endpoint, and client methods, then verify each business operation.
 
