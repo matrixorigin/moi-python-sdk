@@ -1,6 +1,6 @@
 # MOI Product Python SDK
 
-[English](https://github.com/matrixorigin/moi-python-sdk/blob/v5.2.3/README.md)
+[English](README.md)
 
 在 Python 应用中通过 MatrixOne Intelligence（MOI）5.x AI Studio 产品 API 管理工作区、Catalog 和文件、工作流、知识库、SQL 及智能体。请求沿用服务端的工作区与角色权限。
 
@@ -17,11 +17,7 @@ python -m pip install moi-product-sdk
 python -c "from importlib.metadata import version; import moi_product_sdk; print(version('moi-product-sdk'))"
 ```
 
-如需固定版本，请从 [PyPI 发布历史](https://pypi.org/project/moi-product-sdk/#history)选择。[GitHub v5.2.3 Release](https://github.com/matrixorigin/moi-python-sdk/releases/tag/v5.2.3)提供源码快照和校验清单，安装包的可用版本以 PyPI 为准。
-
-### 旧版离线包
-
-[官方 SDK 下载页](https://docs.matrixorigin.cn/moi/zh/5.0/developer/quickstart/downloads/ai-studio.html)提供 `0.1.0-r2` 离线归档，其中的 wheel 版本是 `0.1.0`。如果部署需要该旧版，请按下载页校验归档，并安装其中实际提供的 wheel。
+如需安装此版本，请运行 `python -m pip install moi-product-sdk==5.2.3`。其他可用版本见 [PyPI 发布历史](https://pypi.org/project/moi-product-sdk/#history)。[GitHub v5.2.3 Release](https://github.com/matrixorigin/moi-python-sdk/releases/tag/v5.2.3)提供源码快照和校验清单，安装包的可用版本以 PyPI 为准。
 
 ## 认证与最小示例
 
@@ -32,7 +28,7 @@ export PRODUCT_API_BASE_URL='https://api.moi.matrixorigin.cn/v5'
 export PRODUCT_API_KEY='YOUR_PERSONAL_ACCESS_TOKEN'
 ```
 
-将以下代码保存为 `bind_workspace.py`，执行 `python bind_workspace.py`。示例按名称绑定工作区并输出其 ID，使用受推荐的 `ensure_workspace` 用户故事入口。绑定工作区后，后续操作请继续使用 `WorkspaceHandle`。只有在已经拿到工作区 ID 时才使用 `client.workspace(workspace_id)`。
+将以下代码保存为 `list_workspaces.py`，执行 `python list_workspaces.py`，列出当前账号可访问的工作区。
 
 ```python
 import os
@@ -43,22 +39,18 @@ client = sdk.new_with_personal_access_token(
     os.environ["PRODUCT_API_BASE_URL"],
     os.environ["PRODUCT_API_KEY"],
 )
-workspace = client.ensure_workspace("my-first-workspace")
-print(workspace.id, workspace.name)
-```
 
-也可以直接调用与 API 路由对应的底层服务：
-
-```python
 for workspace in client.workspaces().list().workspaces:
     print(workspace.id, workspace.name)
 ```
+
+如需按名称查找工作区并在不存在时创建，使用 `client.ensure_workspace("my-first-workspace")`。已知 ID 时，可使用 `client.workspace(workspace_id)`。
 
 PAT 标识账号。工作区请求默认使用服务端的 Default Role，也可以在创建客户端时使用 `with_workspace_current_role_id` 为指定工作区选择角色。 请使用已绑定的角色 ID。服务端会验证角色，显式选择无效时请求会失败。
 
 ## 版本兼容性与许可证
 
-Python SDK 5.2.3 面向 MOI 5.2.3 的 AI Studio API（`/v5`）。使用其他 MOI 版本时，请按部署说明选择匹配的制品。旧离线包的能力覆盖可能不同。
+Python SDK 5.2.3 面向 MOI 5.2.3 的 AI Studio API（`/v5`）。使用其他 MOI 版本时，请按部署说明选择匹配的制品。
 
 [旧版 Catalog SDK](https://github.com/matrixorigin/moi-python-sdk/tree/legacy) 面向 MOI 4.0，使用 `moi-python-sdk`、`moi` 和 `RawClient` / `SDKClient`。迁移到 MOI 5.x 时，请改用 Product SDK 的安装包、导入名、API 地址与客户端方法，并重新验证各业务调用。
 
